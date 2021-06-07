@@ -47,11 +47,11 @@ if $sectionA {
 		bar(2, lc(none) fcolor(navy*0.9)) 																	///
 		bar(3, lc(none) fcolor(navy*1.3)) 																	///
 		graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid) 	///
-		legend(order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )											///
+		legend(on order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )											///
 			pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small)) 			///
 		yscale(titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)							///
 		ylabel(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%"  1 "100%", labsize(small)) 						///
-		ytitle("Share of providers outperformed median Kenyan nurse {&rarr}", size(small)) allcategories	note("")	
+		ytitle("Share of providers outperformed median Kenyan nurse {&rarr}", size(vsmall)) allcategories	note("")	
 		
 		graph save "$VG_out/figs/cadre_knowledge2.gph", replace 
 	
@@ -63,12 +63,12 @@ if $sectionA {
 		box(2, fcolor(none) lcolor(navy*0.9)) 																///
 		box(3, fcolor(none) lcolor(navy*1.3)) 																///
 		graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid) 	///
-		legend(order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )								///
+		legend(on order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )								///
 			pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small)) 		///
 		yscale(range(-3 3) titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)				///
 		ylabel(-3 "-3" -2 "-2" -1 "-1" 0 "0" 1 "1" 2 "2" 3 "3" , labsize(small)) 							///
 		yline(`ken_med', lwidth(0.3) lcolor(black) lpattern(dash)) 											///
-		ytitle("Provider knowledge score {&rarr}", size(small)) allcategories	note("")	
+		ytitle("Provider knowledge score {&rarr}", size(vsmall)) allcategories	note("")	
 		
 		graph save "$VG_out/figs/cadre_knowledge1.gph", replace 
 		
@@ -133,11 +133,11 @@ if $sectionC {
 		bar(2, lc(none) fcolor(navy*0.9)) 																	///
 		bar(3, lc(none) fcolor(navy*1.3)) 																	///
 		graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid) 	///
-		legend(label(1 "Certificate") label(2 "Diploma") label(3 "Advanced") 								///
+		legend(on label(1 "Certificate") label(2 "Diploma") label(3 "Advanced") 								///
 				order(1 2 3) pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small))	///
 		yscale(titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)							///
 		ylabel(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%"  1 "100%", labsize(small)) 						///
-		ytitle("Share of providers outperformed median Kenyan nurse {&rarr}", size(small)) allcategories note("")	
+		ytitle("Share of providers outperformed median Kenyan nurse {&rarr}", size(vsmall)) allcategories note("")	
 		
 	graph save "$VG_out/figs/prov_mededu2.gph", replace 
 
@@ -148,12 +148,12 @@ if $sectionC {
 		box(2, fcolor(none) lcolor(navy*0.9)) 																///
 		box(3, fcolor(none) lcolor(navy*1.3)) 																///
 		graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid) 	///
-		legend(order(1 "Certificate" 2 "Diploma" 3 "Advanced" )									///
+		legend(on order(1 "Certificate" 2 "Diploma" 3 "Advanced" )									///
 			pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small)) 			///
 		yscale(range(-3 3) titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)				///
 		ylabel(-3 "-3" -2 "-2" -1 "-1" 0 "0" 1 "1" 2 "2" 3 "3" , labsize(small)) 							///
 		yline(`ken_med', lwidth(0.3) lcolor(black) lpattern(dash)) 													///
-		ytitle("Provider knowledge score {&rarr}", size(small)) allcategories	note("")	
+		ytitle("Provider knowledge score {&rarr}", size(vsmall)) allcategories	note("")	
 
 		
 		graph save "$VG_out/figs/prov_mededu1.gph", replace 
