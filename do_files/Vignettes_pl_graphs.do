@@ -105,7 +105,7 @@ if $sectionB {
 		box(11, fcolor(none) lcolor(purple) lwidth(0.4)) marker(11, msize(vsmall) mcolor(purple)) 		///
 		box(12, fcolor(none) lcolor(red) lwidth(0.4)) marker(12, msize(vsmall) mcolor(red)) 			///
 		box(13, fcolor(none) lcolor(brown) lwidth(0.4)) marker(13, msize(vsmall) mcolor(brown)) 		///
-		yline(`ken_med', lwidth(0.3) lcolor(black) lpattern(dash))  									///
+		yline(0, lwidth(0.3) lcolor(black) lpattern(dash))  									///
 		ylabel(-5(1)5, labsize(small) angle(0) nogrid) 													///
 		ytitle("Provider's knowledge score {&rarr}", placement(left) justification(left) size(small)) 	///
 		legend(off) yscale(range(-5 5) titlegap(2)) bgcolor(white) graphregion(color(white)) asyvars 	///
