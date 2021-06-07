@@ -99,10 +99,10 @@
    global VG_dtFin               "$VG_dt/Final"    
    
    *Dofile sub-folder globals
-   global VG_do                  "/Users/`dir'/Documents/GitHub/sdi-health/do_files" // this is the GitHub repo path
+   global VG_do                  "/Users/`dir'/GitHub/sdi-health/do_files" // this is the GitHub repo path
 
    *Output sub-folder globals
-   global VG_out                 "/Users/`dir'/Documents/GitHub/sdi-health/outputs" 	// this is the GitHub repo path
+   global VG_out                 "/Users/`dir'/GitHub/sdi-health/outputs" 	// this is the GitHub repo path
 
 
 *iefolder*1*End_FolderGlobals***************************************************
