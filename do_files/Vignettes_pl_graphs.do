@@ -152,7 +152,7 @@ if $sectionC {
 			pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small)) 			///
 		yscale(range(-3 3) titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)				///
 		ylabel(-3 "-3" -2 "-2" -1 "-1" 0 "0" 1 "1" 2 "2" 3 "3" , labsize(small)) 							///
-		yline(0, lwidth(0.3) lcolor(black) lpattern(dash)) 													///
+		yline(`ken_med', lwidth(0.3) lcolor(black) lpattern(dash)) 													///
 		ytitle("Provider knowledge score {&rarr}", size(small)) allcategories	note("")	
 
 		
