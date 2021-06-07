@@ -90,6 +90,15 @@ if $sectionB {
 			graph export "$VG_out/figs/treat_scatter_irt_age_combine.png", replace as(png)		  	
 	
 } 
+
+  histogram provider_age1, by(country , ixaxes iyaxes note(" ") ) ///
+	  start(15) discrete w(5) fc(gray) lc(none) ///
+		barwidth(4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%" 40 "40%") ///
+		xlab(20 25 30 35 40 45 50 55 60 65 70  , labsize(vsmall)) ///
+		ytit(" ") xtit(" ")
+		
+		graph export "$VG_out/figs/age_distro.png", replace as(png)
+		
  
 /****************************************************************************
  			Create scatter line graph for treatment accuracy   
