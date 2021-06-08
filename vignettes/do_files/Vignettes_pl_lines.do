@@ -91,12 +91,19 @@ if $sectionB {
 	
 } 
 
-  histogram provider_age1, by(country , ixaxes iyaxes note(" ") legend(r(1) order(1 "Provider Age" 2 "Correct Management") )) ///
+  egen loq = pctile(percent_correctt), p(25) by(country provider_age1)
+	egen upq = pctile(percent_correctt), p(75) by(country provider_age1)
+
+  histogram provider_age1, by(country , ixaxes iyaxes note(" ") ///
+	    legend(r(1) order(1 "Age" 2 "Correct Management Mean" 3 "25th and 75th Percentiles") symxsize(small) size(small))) ///
 	  start(15) discrete w(5) fc(gray) lc(none) ///
 		barwidth(4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%" 40 "40%" 50 "50%" 60 "60%" 70 "70%") ///
 		xlab(20 25 30 35 40 45 50 55 60 65 70  , labsize(vsmall)) ///
-		ytit(" ") xtit(" ") addplot(lpoly percent_correctt provider_age1) ///
-		legend(r(1) order(1 "Provider Age" 2 "Correct Management"))
+		ytit(" ") xtit(" ") ///
+		addplot((lpoly percent_correctt provider_age1, lc(red)) ///
+		  (lpoly upq provider_age1, lc(black) ) ///
+			(lpoly loq provider_age1, lc(black) )) ///
+		legend(r(1) order(1 "Age"  2 "Correct Management Mean" 3 "25th and 75th Percentiles") symxsize(small) size(small))
 		
 		graph export "$VG_out/figs/age_distro.png", replace as(png)
 		
