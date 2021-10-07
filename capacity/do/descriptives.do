@@ -57,21 +57,28 @@ use "${git}/data/capacity.dta", clear
 use "${git}/data/capacity.dta", clear
 
   duplicates drop country hf_id , force
-
+  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
+  
   gen hf_outpatient_day = hf_outpatient/90
 
   gen logm = log(hf_outpatient_day)
-  gen logk = log(hf_staff)
-  regress logm logk
+  gen logk = log(hf_staff_op)
+  regress logm c.logk##i.hf_type
   predict raw
   gen exp = exp(raw)
+  
+      replace hf_outpatient_day = 1 if hf_outpatient_day < 1
+      replace hf_outpatient_day = 100 if hf_outpatient_day > 100
 
   tw ///
-    (scatter hf_outpatient_day hf_staff, mc(black) jitter(1) m(.) msize(vtiny)) ///
-    (line exp hf_staff, lc(black) lw(thin)) ///
-    if hf_outpatient_day > 0.14 ///
-    , by(hf_type, ixaxes iyaxes legend(off) note(" "))  ///
-      yscale(log) ytit("Daily Outpatients") ///
+    (scatter hf_outpatient_day hf_staff_op, mc(black) jitter(1) m(.) msize(vtiny)) ///
+    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(thin)) ///
+    (line exp hf_staff_op, lc(black) lw(thin)) ///
+    , by(hf_type, ixaxes iyaxes legend(on) note(" "))  ///
+      yscale(log) ytit("Daily Outpatients at Facility") ///
       xscale(log) xtit("Staff Serving Outpatients") ///
-      ylab(0.14 "1/week" 1 "1/day" 10 "10/day" 100 1000) xlab(1 10 100 1000)
+      ylab(1 "0-1" 10 100 "100+") xlab(1 10 100) subtitle(,bc(none)) ///
+      legend(order(2 "Linear" 3 "Exponential"))
+      
+      graph export "${git}/output/capacity-facility.png" , width(3000) replace
       
