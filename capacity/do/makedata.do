@@ -242,6 +242,7 @@
   order uid country year hf_id prov_id , first
   
   *Save final dataset with new variables added 
-  save "${git}/data/Vignettes_pl.dta", replace 
+  iecodebook export using "${git}/data/capacity.xlsx" ///
+    , save replace sign reset
   
 ************************ End of do-file *****************************************  

@@ -1,7 +1,7 @@
 //
 
 // Resampling -- first attempt, no capacity constraint
-use "$EL_dtFin/Vignettes_pl.dta", clear
+use "${git}/capacity.dta", clear
 
   drop if hf_type == .
 
@@ -88,7 +88,7 @@ use "$EL_dtFin/Vignettes_pl.dta", clear
 
 -
 // Outpatients per provider quality
-use "$EL_dtFin/Vignettes_pl.dta", clear
+use "${git}/capacity.dta", clear
 
   collapse (mean) irt hf_outpatient hf_staff hf_type, by(country hf_id) fast
   
@@ -125,7 +125,7 @@ use "$EL_dtFin/Vignettes_pl.dta", clear
     xtit("Average Facility Provider Competence")
       
 // Outpatients per provider day
-use "$EL_dtFin/Vignettes_pl.dta", clear
+use "${git}/capacity.dta", clear
 
   duplicates drop country hf_id , force
 
@@ -147,7 +147,7 @@ use "$EL_dtFin/Vignettes_pl.dta", clear
       ylab(0.14 "1/week" 1 "1/day" 10 "10/day" 100 1000) xlab(1 10 100 1000)
 
 // Outpatients and staffing
-use "$EL_dtFin/Vignettes_pl.dta", clear
+use "${git}/capacity.dta", clear
 
   duplicates drop country hf_id , force
 
