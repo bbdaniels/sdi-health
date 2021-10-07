@@ -1,61 +1,57 @@
 // Outpatients per provider quality
 use "${git}/data/capacity.dta", clear
 
-  collapse (mean) irt hf_outpatient hf_staff hf_type, by(country hf_id) fast
+  collapse (mean) irt hf_outpatient hf_staff_op hf_type, by(country hf_id) fast
   
-  xtile q = irt , nq(5)
-
-  gen hf_outpatient_day = hf_outpatient/(90*hf_staff)
+  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
+  expand hf_staff_op
+  
+  drop if hf_outpatient == . | hf_outpatient == 0
+  replace hf_outpatient_day = 1 if hf_outpatient_day < 1
+  drop if hf_outpatient_day > 95
+  gen irt2 =  irt
+      replace irt2 = 1.113 if irt2 > 1.113
+      replace irt2 = -1.243 if irt2 < -1.243
 
   tw ///
-    (scatter hf_outpatient_day irt, mc(black)  m(.) msize(vtiny)) ///
-    (lpoly hf_outpatient_day irt, lc(black) lw(thin)) ///
-    if hf_outpatient_day > 0.033 ///
-    , by(country, ixaxes iyaxes legend(off) note(" "))  ///
-      yscale(log) ytit("Daily Outpatients") ///
-      /// xscale(log) xtit("Staff Serving Outpatients") ///
-      ylab(0.14 "1/week" 1 "1/day" 10 "10/day" 100 1000)
+    (scatter irt2 hf_outpatient_day , mc(gray)  m(.) msize(vtiny)) ///
+    (lowess irt hf_outpatient_day , lc(red) lw(medthick)) ///
+    , by(country, rescale ixaxes iyaxes legend(off) note(" ") c(2))  ///
+      xtit("Daily Provider Outpatients") ytit("Provider Competence") ///
+      xscale(log noline) xlab(1 "0-1" 10 100 "100+") ///
+      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") ///
+      yscale(noline) subtitle(,bc(none)) ysize(6)
       
-      
-  levelsof country , local(c)
-  local x = 1
-  foreach country in `c' {
-    local ++x
-    local graphs = `"`graphs'"' ///
-      +  `"(lfit hf_outpatient_day irt if country == `country') "'
-    local legend `"`legend' `x' "`: label (country) `country''" "'
-  }
-  
-  tw ///
-    (scatter hf_outpatient_day irt , mc(black) m(.) msize(vtiny)) ///
-    `graphs' ///
-    if hf_outpatient_day > 0.033 ///
-  , yscale(log) legend(on order(`legend') pos(3) c(1) symxsize(small) size(small)) ///
-    ylab(0.14 "1/week" 1 "1/day" 10 "10/day" 100 1000) ///
-    ytit("Outpatients per Provider Day") ///
-    xtit("Average Facility Provider Competence")
+    graph export "${git}/output/capacity-quality.png" , width(3000) replace
       
 // Outpatients per provider day
 use "${git}/data/capacity.dta", clear
 
   duplicates drop country hf_id , force
+  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
 
-  gen hf_outpatient_day = hf_outpatient/(90*hf_staff)
+  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
 
   gen logm = log(hf_outpatient_day)
-  gen logk = log(hf_staff)
-  regress logm logk
+  gen logk = log(hf_staff_op)
+  regress logm c.logk##i.hf_type
   predict raw
   gen exp = exp(raw)
+  
+    replace hf_outpatient_day = 1 if hf_outpatient_day < 1
+    replace hf_outpatient_day = 100 if hf_outpatient_day > 100
 
   tw ///
-    (scatter hf_outpatient_day hf_staff, mc(black) jitter(1) m(.) msize(vtiny)) ///
-    (line exp hf_staff, lc(black) lw(thin)) ///
-    if hf_outpatient_day > 0.033 ///
-    , by(hf_type, ixaxes iyaxes legend(off) note(" "))  ///
-      yscale(log) ytit("Daily Outpatients") ///
+    (scatter hf_outpatient_day hf_staff_op, mc(black) jitter(1) m(.) msize(vtiny)) ///
+    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(thin)) ///
+    (line exp hf_staff_op, lc(black) lw(thin)) ///
+    , by(hf_type, ixaxes iyaxes legend(on) note(" "))  ///
+      yscale(log) ytit("Daily Outpatients per Staff") ///
       xscale(log) xtit("Staff Serving Outpatients") ///
-      ylab(0.14 "1/week" 1 "1/day" 10 "10/day" 100 1000) xlab(1 10 100 1000)
+      ylab(1 "0-1" 10 100 "100+") xlab(1 10 100) subtitle(,bc(none)) ///
+      legend(order(2 "Linear" 3 "Exponential"))
+      
+      graph export "${git}/output/capacity-staff.png" , width(3000) replace
 
 // Outpatients and staffing
 use "${git}/data/capacity.dta", clear
