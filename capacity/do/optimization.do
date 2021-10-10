@@ -29,17 +29,30 @@ use "${git}/data/capacity.dta", clear
     
     preserve
     gsort country hf_type -irt
-      keep country hf_type irt
+      keep country hf_type irt cap
+      ren cap hf_outpatient_day
       gen serial = _n
       tempfile irt
       save `irt' , replace
     restore
     
     gsort country hf_type -cap 
-      keep country hf_type cap
+      ren irt irt_old
+      keep country hf_type cap irt_old
       gen serial = _n
 
       merge 1:1 country hf_type serial using `irt' , nogen
+      
+            
+                  gen c_o = hf_outpatient_day
+                  gen c_n = cap
+                  tw ///
+                    (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
+                    (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
+                  , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
+            
+            -
+      
       
       collapse (mean) irt_new = irt (rawsum) n2 = cap ///
         [aweight=cap], by(country hf_type) 
@@ -58,12 +71,12 @@ use "${git}/data/capacity.dta", clear
       (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(navy) mc(navy)) ///
       (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(navy) mc(navy)) ///
       (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(navy) mc(navy)) ///
-    , by(country , rescale ixaxes note(" ")  ///
-         legend(ring(0) pos(12))) ///
+    , by(country , c(3) rescale ixaxes note(" ")  ///
+         legend(ring(0) pos(12))) subtitle(,bc(none)) ysize(6) ///
       xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
       xlab(0 "0%" .25 "25%" .5 "50%") xscale(noline) ///
-      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "Top 10%" -1.243 "Bottom 10%") yscale(noline) ///
-      legend(size(small) c(4) ///
+      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") yscale(noline) ///
+      legend(size(small) symxsize(small) c(4) ///
         order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
               0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
               
@@ -102,6 +115,7 @@ use "${git}/data/capacity.dta", clear
     }
     replace cap = cap * hf_staff_op
     lab var cap "Facility Capacity"
+
     
   // Selector dataset
   gsort country hf_type -irt
@@ -122,6 +136,17 @@ use "${git}/data/capacity.dta", clear
       replace cap = total-temp if (temp2 == . | temp2 == 0)
       
       replace cap = 0 if touse == 0
+      
+      
+      gen c_o = hf_outpatient_day
+      gen c_n = cap
+      tw ///
+        (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
+        (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
+      , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
+      
+      
+      
 
     collapse (mean) irt_new = irt (rawsum) n2 = cap ///
       [aweight=cap], by(country hf_type) 
@@ -141,11 +166,11 @@ use "${git}/data/capacity.dta", clear
       (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(navy) mc(navy)) ///
       (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(navy) mc(navy)) ///
     , by(country , rescale ixaxes note(" ")  ///
-         legend(ring(0) pos(12))) ///
+         legend(ring(0) pos(12)) c(3)) subtitle(,bc(none)) ysize(6) ///
       xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
       xlab(0 "0%" .25 "25%" .5 "50%") xscale(noline) ///
-      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "Top 10%" -1.243 "Bottom 10%") yscale(noline) ///
-      legend(size(small) c(4) ///
+      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") yscale(noline) ///
+      legend(size(small) symxsize(small) c(4) ///
         order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
               0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
 
