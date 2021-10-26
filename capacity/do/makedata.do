@@ -242,6 +242,6 @@
   order uid country year hf_id prov_id , first
   
   *Save final dataset with new variables added 
-  save "${git}/data/Vignettes_pl.dta", replace 
+  save "${git}/data/capacity.dta", replace 
   
 ************************ End of do-file *****************************************  
