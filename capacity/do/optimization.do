@@ -43,16 +43,14 @@ use "${git}/data/capacity.dta", clear
 
       merge 1:1 country hf_type serial using `irt' , nogen
       
-            
-                  gen c_o = hf_outpatient_day
-                  gen c_n = cap
-                  tw ///
-                    (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
-                    (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
-                  , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
-            
-            -
-      
+      /* Outlier checks      
+        gen c_o = hf_outpatient_day
+        gen c_n = cap
+        tw ///
+          (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
+          (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
+        , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
+      */
       
       collapse (mean) irt_new = irt (rawsum) n2 = cap ///
         [aweight=cap], by(country hf_type) 
@@ -65,13 +63,13 @@ use "${git}/data/capacity.dta", clear
     // Graphics
     local style msize(small)
     tw ///
-      (pcarrow irt n irt_new n if hf_type == 1 , `style' mang(30) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 2 , `style' mang(60) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 3 , `style' mang(90) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(navy) mc(navy)) ///
-      (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(navy) mc(navy)) ///
-      (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(navy) mc(navy)) ///
-    , by(country , c(3) rescale ixaxes note(" ")  ///
+      (pcarrow irt n irt_new n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(gray) mc(gray)) ///
+      (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(gray) mc(gray)) ///
+      (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(gray) mc(gray)) ///
+    , by(country , c(2) rescale ixaxes note(" ")  ///
          legend(ring(0) pos(12))) subtitle(,bc(none)) ysize(6) ///
       xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
       xlab(0 "0%" .25 "25%" .5 "50%") xscale(noline) ///
@@ -137,14 +135,14 @@ use "${git}/data/capacity.dta", clear
       
       replace cap = 0 if touse == 0
       
-      
+      /*
       gen c_o = hf_outpatient_day
       gen c_n = cap
       tw ///
         (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
         (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
       , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
-      
+      */
       
       
 
@@ -159,14 +157,14 @@ use "${git}/data/capacity.dta", clear
     // Graphics
     local style msize(small)
     tw ///
-      (pcarrow irt n irt_new n if hf_type == 1 , `style' mang(30) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 2 , `style' mang(60) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 3 , `style' mang(90) lc(maroon) mc(maroon)) ///
-      (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(navy) mc(navy)) ///
-      (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(navy) mc(navy)) ///
-      (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(navy) mc(navy)) ///
+      (pcarrow irt n irt_new n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
+      (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(gray) mc(gray)) ///
+      (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(gray) mc(gray)) ///
+      (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(gray) mc(gray)) ///
     , by(country , rescale ixaxes note(" ")  ///
-         legend(ring(0) pos(12)) c(3)) subtitle(,bc(none)) ysize(6) ///
+         legend(ring(0) pos(12)) c(2)) subtitle(,bc(none)) ysize(6) ///
       xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
       xlab(0 "0%" .25 "25%" .5 "50%") xscale(noline) ///
       yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") yscale(noline) ///

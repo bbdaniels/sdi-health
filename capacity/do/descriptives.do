@@ -12,7 +12,7 @@ use "${git}/data/capacity.dta", clear
   tw ///
    (scatter hf_inpatient hf_outpatient [pweight= hf_staff] ///
      if hf_inpatient >= 1 & hf_outpatient >= 1 , m(Oh) mlc(black%50) mlw(thin)) ///
-   , ysize(6) by(country , ixaxes iyaxes legend(off) note(" ") c(2) scale(0.7) ) ///
+   , ysize(6) subtitle(,bc(none)) by(country , ixaxes iyaxes legend(off) note(" ") c(2) scale(0.7) subtitle(,bc(none))) ///
      xscale(log) yscale(log) xlab(1 "0" 10 100 1000 10000 100000) ylab(1 "0" 10 100 1000 10000 100000)
      
      graph export "${git}/output/caseload.png" , width(3000) replace
@@ -32,7 +32,8 @@ use "${git}/data/capacity.dta", clear
   
     graph hbox `var' ///
       , over(hf_type , axis(noline)) note(" ") scale(0.7) ///
-        noout nodraw ytit("") title("`label'", pos(11) span) 
+        noout nodraw ytit("") title("`label'", pos(11) span) ///
+        box(1 , fc(none) lc(black))
         
         graph save "${git}/temp/`var'.gph" , replace
         local graphs `" `graphs' "${git}/temp/`var'.gph" "'
@@ -59,7 +60,7 @@ use "${git}/data/capacity.dta", clear
 
   tw ///
     (scatter irt2 hf_outpatient_day , mc(gray)  m(.) msize(vtiny)) ///
-    (lowess irt hf_outpatient_day , lc(red) lw(medthick)) ///
+    (lowess irt hf_outpatient_day , lc(red) lw(thick)) ///
     , by(country, rescale ixaxes iyaxes legend(off) note(" ") c(2))  ///
       xtit("Daily Provider Outpatients") ytit("Provider Competence") ///
       xscale(log noline) xlab(1 "0-1" 10 100 "100+") ///
@@ -87,13 +88,13 @@ use "${git}/data/capacity.dta", clear
 
   tw ///
     (scatter hf_outpatient_day hf_staff_op, mc(black) jitter(1) m(.) msize(vtiny)) ///
-    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(thin)) ///
-    (line exp hf_staff_op, lc(black) lw(thin)) ///
+    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(medthick)) ///
+    (line exp hf_staff_op, lc(black) lw(medthick)) ///
     , by(hf_type, ixaxes iyaxes legend(on) note(" "))  ///
       yscale(log) ytit("Daily Outpatients per Staff") ///
       xscale(log) xtit("Staff Serving Outpatients") ///
       ylab(1 "0-1" 10 100 "100+") xlab(1 10 100) subtitle(,bc(none)) ///
-      legend(order(2 "Linear" 3 "Exponential"))
+      legend(order(2 "LOWESS" 3 "Parametric"))
       
       graph export "${git}/output/capacity-staff.png" , width(3000) replace
 
@@ -116,13 +117,13 @@ use "${git}/data/capacity.dta", clear
 
   tw ///
     (scatter hf_outpatient_day hf_staff_op, mc(black) jitter(1) m(.) msize(vtiny)) ///
-    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(thin)) ///
-    (line exp hf_staff_op, lc(black) lw(thin)) ///
+    (lpoly hf_outpatient_day hf_staff_op, lc(red) lw(medthick)) ///
+    (line exp hf_staff_op, lc(black) lw(medthick)) ///
     , by(hf_type, ixaxes iyaxes legend(on) note(" "))  ///
       yscale(log) ytit("Daily Outpatients at Facility") ///
       xscale(log) xtit("Staff Serving Outpatients") ///
       ylab(1 "0-1" 10 100 "100+") xlab(1 10 100) subtitle(,bc(none)) ///
-      legend(order(2 "Linear" 3 "Exponential"))
+      legend(order(2 "LOWESS" 3 "Parametric"))
       
       graph export "${git}/output/capacity-facility.png" , width(3000) replace
       
