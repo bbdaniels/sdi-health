@@ -1,3 +1,28 @@
+// Overall descriptives
+
+use "${git}/data/capacity.dta", clear
+  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
+  
+  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type ///
+      , by(country hf_id) vallab(hf_type)
+      
+  foreach var of varlist ///
+    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+      
+    local label : var label `var'
+  
+    graph hbox `var' ///
+      , over(hf_type , axis(noline)) note(" ") scale(0.7) ///
+        noout nodraw ytit("") title("`label'", pos(11) span) 
+        
+        graph save "${git}/temp/`var'.gph" , replace
+        local graphs `" `graphs' "${git}/temp/`var'.gph" "'
+    
+  }
+  
+  graph combine `graphs' , colf
+    
+-
 // Outpatients per provider quality
 use "${git}/data/capacity.dta", clear
 
