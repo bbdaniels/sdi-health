@@ -1,3 +1,5 @@
+// Simulation results robust to large facilities
+
 // Approach 1: Resorting current capacities
 use "${git}/data/capacity.dta", clear
 
@@ -10,6 +12,14 @@ use "${git}/data/capacity.dta", clear
   gen hf_outpatient_day = hf_outpatient/(90)
     drop if hf_outpatient_day == 0 | hf_outpatient_day == .
     lab var hf_outpatient_day "Outpatients Per Day"
+    
+   gen cap = hf_outpatient/(90*hf_staff_op)
+    egen set = group(country hf_type)
+      levelsof set, local(sets)
+      qui foreach s in `sets' {
+        su cap if set == `s', d
+        drop if (cap > `r(p95)' & set == `s') // ROBUSTNESS
+      }
   
   // Get current quality levels
   preserve
@@ -20,7 +30,6 @@ use "${git}/data/capacity.dta", clear
   restore
   
   // Calculate new capacity per day at each facility based on resort
-  gen cap = hf_outpatient/(90*hf_staff_op)
   expand hf_staff_op
   
     sort country hf_type hf_id
@@ -48,6 +57,9 @@ use "${git}/data/capacity.dta", clear
           (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
           (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
         , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
+        
+        graph export "${git}/temp/optimize-providers-robust.png" , width(3000) replace
+
       */
       
       collapse (mean) irt_new = irt (rawsum) n2 = cap ///
@@ -77,10 +89,6 @@ use "${git}/data/capacity.dta", clear
               0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
               
       graph export "${git}/output/optimize-providers.png" , width(3000) replace
-      
-    // Results table
-      ren irt_new irt_sim_a
-      save "${git}/temp/sim-results.dta" , replace
 
 // Approach 2: Adjusted capacity constraint
 use "${git}/data/capacity.dta", clear
@@ -96,6 +104,14 @@ use "${git}/data/capacity.dta", clear
     gen hf_outpatient_day = hf_outpatient/(90)
       drop if hf_outpatient_day == 0 | hf_outpatient_day == .
       lab var hf_outpatient_day "Outpatients Per Day"
+      
+    gen cap = hf_outpatient/(90*hf_staff_op)
+    egen set = group(country hf_type)
+      levelsof set, local(sets)
+      qui foreach s in `sets' {
+        su cap if set == `s', d
+        drop if (cap > `r(p95)' & set == `s') // ROBUSTNESS
+      }
     
     // Get current quality levels
     preserve
@@ -106,12 +122,11 @@ use "${git}/data/capacity.dta", clear
     restore
       
   // Calculate capacity per day at each facility based on country
-  gen cap = hf_outpatient/(90*hf_staff_op)
-  egen set = group(country hf_type)
+  
     levelsof set, local(sets)
     qui foreach s in `sets' {
       su cap if set == `s', d
-      replace cap = `r(p95)' if set == `s'
+      cap replace cap = `r(p95)' if set == `s'
     }
     replace cap = cap * hf_staff_op
     lab var cap "Facility Capacity"
@@ -144,6 +159,8 @@ use "${git}/data/capacity.dta", clear
         (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
         (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
       , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
+      
+        graph export "${git}/temp/optimize-capacity-robust.png" , width(3000) replace
       */
       
       
@@ -175,58 +192,6 @@ use "${git}/data/capacity.dta", clear
               0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
 
       graph export "${git}/output/optimize-capacity.png" , width(3000) replace
-      
-   // Results table
-  ren irt_new irt_sim_b
-  merge 1:1 country hf_type using "${git}/temp/sim-results.dta"
-     
-      gen da = irt_sim_a - irt
-      gen db = irt_sim_b - irt
-     
-      lab var n "Share"
-      lab var irt "Knowledge"
-      lab var irt_sim_a "Simulation A"
-      lab var irt_sim_b "Simulation B"
-      lab var da "Difference"
-      lab var db "Difference"
-     
-     export excel ///
-       country hf_type n irt irt_sim_a da irt_sim_b db ///
-       using "${git}/output/optimize-capacity.xlsx" ///
-     , replace first(varl)
-     
-     
-     save "${git}/temp/sim-results.dta" , replace
-       
-// Quality table
-use "${git}/data/capacity.dta", clear
 
-egen c = rowmean(treat?)
-
-reg c c.irt##i.country c.irt##i.hf_type
-
-use "${git}/temp/sim-results.dta" , clear
-  ren (irt irt_sim_a irt_sim_b) (irt1 irt2 irt3)
-  
-  reshape long irt , i(country hf_type) j(irtx)
-  
-  predict c
-  drop _merge
-  
-  reshape wide irt c, i(country hf_type) j(irtx)
-
-collapse (mean) irt1 c1 irt2 c2 irt3 c3 [pweight=n] , by(country)
-  lab var irt1 "Knowledge"
-  lab var irt2 "Simulation A"
-  lab var irt3 "Simulation B"
-  
-  lab var c1 "Quality"
-  lab var c2 "Simulation A"
-  lab var c3 "Simulation B"
-  
-       export excel ///
-         country irt1 c1 irt2 c2 irt3 c3 ///
-         using "${git}/output/optimize-quality.xlsx" ///
-       , replace first(varl)
     
 //
