@@ -52,6 +52,22 @@ use "${git}/data/capacity.dta", clear
               ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt)
                
               graph export "${git}/output/optimization-providers-sum.png" , width(3000) replace
+              
+              
+                xtile c = irt , n(10)
+                  replace cap = 1 if cap < 1
+                  replace cap = 100 if cap > 100
+
+            tw ///
+              (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+              (lpoly cap c , lc(red) lw(thick)) ///
+            , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+              subtitle(,bc(none)) yscale(log noline) ///
+              ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
+              xlab(1 10) xtit("Competence Decile") ///
+              yline(3.2, lc(black)) xline(5.5 , lc(black))
+              
+              graph export "${git}/output/optimization-providers-alt.png" , width(3000) replace
             -
       
       /* Outlier checks      
@@ -158,7 +174,37 @@ use "${git}/data/capacity.dta", clear
         (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
       , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
       */
+                  tw ///
+                    (histogram hf_outpatient_day , percent yaxis(2) color(gs14) start(0) w(5) gap(10)) ///
+                    (lowess irt cap , lc(black))(lowess irt_old hf_outpatient_day , lc(black) lp(dash)) ///
+                    if hf_outpatient_day < 50 & cap < 50 ///
+                   , by(country , noyrescale xrescale ixaxes r(2) legend(off) note(" ") )  ///
+                    subtitle(,bc(none)) ///
+                    xlab(0 25 50)  xtit("Outpatients per Day") ///
+                    ylab(, angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
+                    ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt)
+                     
+                    graph export "${git}/output/optimization-providers-sum.png" , width(3000) replace
+                    
+                    
+                      xtile c = irt , n(10)
+
+                        expand hf_staff_op
+                        replace cap = cap / hf_staff_op
+                        
+                        replace cap = 1 if cap < 1
+                        replace cap = 100 if cap > 100
       
+                  tw ///
+                    (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+                    (lpoly cap c , lc(red) lw(thick)) ///
+                  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+                    subtitle(,bc(none)) yscale(log noline) ///
+                    ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
+                    xlab(1 10) xtit("Competence Decile") ///
+                    yline(3.2, lc(black)) xline(5.5 , lc(black))
+                    
+                    graph export "${git}/output/optimization-providers-alt.png" , width(3000) replace
       
 
     collapse (mean) irt_new = irt (rawsum) n2 = cap ///
