@@ -76,6 +76,9 @@ use "${git}/data/capacity.dta", clear
     ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
     xlab(1 10) xtit("Competence Decile") ///
     yline(3.2, lc(black)) xline(5.5 , lc(black))
+    
+        graph export "${git}/output/capacity-quality-new.png" , width(3000) replace
+
 
   tw ///
     (scatter irt2 hf_outpatient_day , mc(gray)  m(.) msize(vtiny)) ///
