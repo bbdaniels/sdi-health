@@ -65,6 +65,17 @@ use "${git}/data/capacity.dta", clear
   gen irt2 =  irt
       replace irt2 = 1.113 if irt2 > 1.113
       replace irt2 = -1.243 if irt2 < -1.243
+      
+      xtile c = irt , n(10)
+      
+  tw ///
+    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+    (lowess hf_outpatient_day c , lc(red) lw(thick)) ///
+  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+    subtitle(,bc(none)) yscale(log noline) ///
+    ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
+    xlab(1 10) xtit("Competence Decile") ///
+    yline(3.2, lc(black)) xline(5.5 , lc(black))
 
   tw ///
     (scatter irt2 hf_outpatient_day , mc(gray)  m(.) msize(vtiny)) ///
