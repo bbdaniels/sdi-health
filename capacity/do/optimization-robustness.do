@@ -3,7 +3,7 @@
 // Approach 1: Resorting current capacities
 use "${git}/data/capacity.dta", clear
 
-  drop if hf_type == .
+  drop if hf_type == . | hf_outpatient == 0
 
   labelcollapse (mean) irt hf_outpatient hf_staff_op hf_type ///
     , by(country hf_id) vallab(hf_type)
@@ -50,6 +50,18 @@ use "${git}/data/capacity.dta", clear
 
       merge 1:1 country hf_type serial using `irt' , nogen
       
+      tw ///
+        (histogram hf_outpatient_day , percent yaxis(2) color(gs14) start(0) w(5) gap(10)) ///
+        (lowess irt cap , lc(black))(lowess irt_old hf_outpatient_day , lc(black) lp(dash)) ///
+        if hf_outpatient_day < 50 & cap < 50 ///
+       , by(country , noyrescale xrescale ixaxes r(2) legend(off) note(" ") )  ///
+        subtitle(,bc(none)) ///
+        xlab(0 10 20 30 40)  xtit("Outpatients per Day") ///
+        ylab(, angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
+        ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt)
+         
+        graph export "${git}/output/optimization-providers-sum.png" , width(3000) replace
+      -
       /* Outlier checks      
         gen c_o = hf_outpatient_day
         gen c_n = cap
