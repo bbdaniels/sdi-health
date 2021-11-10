@@ -93,5 +93,7 @@ use "${git}/data/capacity.dta", clear
       legend(on pos(12) c(4) size(small) ///
         order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
         0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
+        
+    graph export "${git}/output/capacity-staff.png" , width(3000) replace
 
 // End      
