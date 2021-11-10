@@ -203,7 +203,7 @@ use "${git}/data/capacity.dta", clear
 
 egen c = rowmean(treat?)
 
-reg c c.irt##i.country c.irt##i.hf_type
+reg c c.irt##i.country 
 
 use "${git}/temp/sim-results.dta" , clear
   ren (irt irt_sim_a irt_sim_b) (irt1 irt2 irt3)

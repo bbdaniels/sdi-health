@@ -1,19 +1,27 @@
 // Inpatients
 
 use "${git}/data/capacity.dta", clear
-  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
+  drop if hf_outpatient == . | hf_inpatient == . | hf_staff == 0
   
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type ///
       , by(country hf_id) vallab(hf_type)
       
-      replace hf_inpatient = 1 if hf_inpatient == 0
-      replace hf_outpatient = 1 if hf_outpatient == 0
+      replace hf_inpatient = hf_inpatient/90
+      replace hf_outpatient = hf_outpatient/90
+      
+      replace hf_inpatient = 1 if hf_inpatient < 1
+      replace hf_outpatient = 1 if hf_outpatient < 1
+      
+      replace hf_outpatient = 1000 if hf_outpatient > 1000
+      replace hf_inpatient = 1000 if hf_inpatient > 1000
 
   tw ///
    (scatter hf_inpatient hf_outpatient [pweight= hf_staff] ///
      if hf_inpatient >= 1 & hf_outpatient >= 1 , m(Oh) mlc(black%50) mlw(thin)) ///
-   , ysize(6) subtitle(,bc(none)) by(country , ixaxes iyaxes legend(off) note(" ") c(2) scale(0.7) subtitle(,bc(none))) ///
-     xscale(log) yscale(log) xlab(1 "0" 10 100 1000 10000 100000) ylab(1 "0" 10 100 1000 10000 100000)
+   , ysize(6) subtitle(,bc(none)) by(country , ///
+       rescale ixaxes iyaxes legend(off) note(" ") c(2) scale(0.7) subtitle(,bc(none))) ///
+     xtit("Outpatients per Day") ytit("Inpatients per Day") ///
+     xscale(log) yscale(log) xlab(1 "0-1" 10 100 1000 "1000+") ylab(1 "0-1" 10 100 1000 "1000+")
      
      graph export "${git}/output/caseload.png" , width(3000) replace
 
