@@ -37,33 +37,37 @@ use "${git}/data/capacity.dta", clear
 
       merge 1:1 country hf_type serial using `irt' , nogen
       
-            tw ///
-              (histogram hf_outpatient_day , percent yaxis(2) color(gs14) start(0) w(5) gap(10)) ///
-              (lowess irt cap , lc(black))(lowess irt_old hf_outpatient_day , lc(black) lp(dash)) ///
-              if hf_outpatient_day < 50 & cap < 50 ///
-             , by(country , noyrescale xrescale ixaxes r(2) legend(off) note(" ") )  ///
-              subtitle(,bc(none)) ///
-              xlab(0 25 50)  xtit("Outpatients per Day") ///
-              ylab(, angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
-              ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt)
+      tw ///
+        (histogram hf_outpatient_day , percent yaxis(2) color(gs12) start(0) w(5) gap(10) lp(blank)) ///
+        (lowess irt cap , lc(black))(lowess irt_old hf_outpatient_day , lc(black) lp(dash)) ///
+        (function -4 , range(0 40) lc(black) lw(thin)) ///
+        if hf_outpatient_day < 40 & cap < 40 ///
+      , by(country , noyrescale xrescale ixaxes r(2) legend(on pos(12)) note(" ") )  ///
+        subtitle(,bc(none)) ///
+        xscale(noline) ///
+        xlab(0 10 20 30 40)  xtit("Outpatients per Day") ///
+        ylab(0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%", angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
+        ylab(-4 "-4 SD" -2 "-2 SD" 0 "Mean" 2 "+2 SD") ///
+        ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt) ///
+        legend(pos(12) r(1) size(small) order(3 "Actual" 2 "Optimal" 1 "Percentage of Providers (Right Axis)"))
                
-              graph export "${git}/output/optimization-providers-sum.png" , width(3000) replace
+        graph export "${git}/output/optimization-providers-sum.png" , width(3000) replace
               
               
-                xtile c = irt , n(10)
-                  replace cap = 1 if cap < 1
-                  replace cap = 100 if cap > 100
+      xtile c = irt , n(10)
+        replace cap = 1 if cap < 1
+        replace cap = 100 if cap > 100
 
-            tw ///
-              (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-              (mband cap c , lc(red) lw(vthick) ) ///
-            , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
-              subtitle(,bc(none)) yscale(log noline) ///
-              ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
-              xlab(1 10) xtit("Competence Decile") ///
-              yline(3.2, lc(black)) xline(5.5 , lc(black))
-              
-              graph export "${git}/output/optimization-providers-alt.png" , width(3000) replace
+        tw ///
+          (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+          (mband cap c , lc(red) lw(vthick) ) ///
+        , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+          subtitle(,bc(none)) yscale(log noline) ///
+          ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
+          xlab(1 10) xtit("Competence Decile") ///
+          yline(3.2, lc(black)) xline(5.5 , lc(black))
+          
+          graph export "${git}/output/optimization-providers-alt.png" , width(3000) replace
             -
       
       /* Outlier checks      
