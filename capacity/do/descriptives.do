@@ -56,23 +56,20 @@ use "${git}/data/capacity.dta", clear
 // Outpatients per provider quality
 use "${git}/data/capacity.dta", clear
 
-  collapse (mean) irt hf_outpatient hf_staff_op hf_type, by(country hf_id) fast
+  // collapse (mean) irt hf_outpatient hf_staff_op hf_type, by(country hf_id) fast
   
   gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
-  expand hf_staff_op
+  // expand hf_staff_op
   
-  drop if hf_outpatient == . | hf_outpatient == 0
+  drop if missing(hf_outpatient) | hf_outpatient == 0
   replace hf_outpatient_day = 1 if hf_outpatient_day < 1
-  drop if hf_outpatient_day > 95
-  gen irt2 =  irt
-      replace irt2 = 1.113 if irt2 > 1.113
-      replace irt2 = -1.243 if irt2 < -1.243
+  replace hf_outpatient_day = 100 if hf_outpatient_day > 100
       
       xtile c = irt , n(10)
       
   tw ///
     (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-    (lowess hf_outpatient_day c , lc(red) lw(thick)) ///
+    (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
     subtitle(,bc(none)) yscale(log noline) ///
     ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///

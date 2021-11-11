@@ -2,10 +2,7 @@
 use "${git}/data/capacity.dta", clear
 
   drop if hf_type == . | hf_outpatient == 0
-
-  labelcollapse (mean) irt hf_outpatient hf_staff_op hf_type ///
-    , by(country hf_id) vallab(hf_type)
-    
+   
   // Calculate outpatients per provider day at each facility
   gen hf_outpatient_day = hf_outpatient/(90)
     drop if hf_outpatient_day == 0 | hf_outpatient_day == .
@@ -14,14 +11,13 @@ use "${git}/data/capacity.dta", clear
   // Get current quality levels
   preserve
     collapse (mean) irt (rawsum) n = hf_outpatient_day ///
-      [aweight=hf_outpatient], by(country hf_type) 
+      [aweight=hf_outpatient_day], by(country hf_type) 
     tempfile now
     save `now' , replace
   restore
   
   // Calculate new capacity per day at each facility based on resort
   gen cap = hf_outpatient/(90*hf_staff_op)
-  expand hf_staff_op
   
     sort country hf_type hf_id
     
@@ -60,7 +56,7 @@ use "${git}/data/capacity.dta", clear
 
             tw ///
               (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-              (lpoly cap c , lc(red) lw(thick)) ///
+              (mband cap c , lc(red) lw(vthick) ) ///
             , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
               subtitle(,bc(none)) yscale(log noline) ///
               ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
@@ -187,7 +183,7 @@ use "${git}/data/capacity.dta", clear
       
                   tw ///
                     (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-                    (lpoly cap c , lc(red) lw(thick)) ///
+                    (qfit cap c , lc(red) lw(vthick)) ///
                   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
                     subtitle(,bc(none)) yscale(log noline) ///
                     ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
