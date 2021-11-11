@@ -30,7 +30,7 @@ use "${git}/data/capacity.dta", clear
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
   
-  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type ///
+  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
       , by(country hf_id) vallab(hf_type)
       
   foreach var of varlist ///
@@ -39,8 +39,10 @@ use "${git}/data/capacity.dta", clear
     local label : var label `var'
   
     graph hbox `var' ///
-      , over(hf_type , axis(noline)) note(" ") scale(0.7) ///
-        noout nodraw ytit("") title("`label'", pos(11) span) ///
+      , by(hf_level , ixaxes rescale  imargin(zero) c(1) ///
+          title("`label'", pos(11) span) note(" ")) subtitle(" ", ring(0)) ///
+        over(hf_type ,  axis(noline) ) nofill note(" ") scale(0.7) subtitle(,bc(none)) ///
+        noout  nodraw ytit("") /// 
         box(1 , fc(none) lc(black))
         
         graph save "${git}/temp/`var'.gph" , replace
@@ -101,7 +103,7 @@ use "${git}/data/capacity.dta", clear
   
   binscatter hf_outpatient_day hf_staff_op ///
     , by(hf_type) line(qfit) n(4) colors(black black%60 black%40 red red%60 red%40 ) ///
-      m(T O D T O D) ///
+      m(T O D T O D)  ///
       xlab(1 5 10 15) ylab(0 2 4 6 8 10) ///
       xtit("Staff Serving Outpatients") ytit("Daily Outpatients per Staff") ///
       legend(on pos(12) c(4) size(small) ///
