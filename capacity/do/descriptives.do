@@ -73,8 +73,8 @@ use "${git}/data/capacity.dta", clear
       xtile c = irt , n(10)
       
   tw ///
-    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
     (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
+    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
     subtitle(,bc(none)) yscale(log noline) ///
     ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
