@@ -38,6 +38,13 @@ use "${git}/data/capacity.dta", clear
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
       , by(country hf_id) vallab(hf_type)
       
+  replace hf_inpatient = hf_inpatient/90
+    lab var hf_inpatient "Daily Inpatients"
+  replace hf_outpatient = hf_outpatient/90
+    lab var hf_outpatient "Daily Outpatients"
+    
+    recode hf_level (2=3)(3=2)
+          
   foreach var of varlist ///
     hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
       
@@ -51,11 +58,15 @@ use "${git}/data/capacity.dta", clear
         box(1 , fc(none) lc(black))
         
         graph save "${git}/temp/`var'.gph" , replace
-        local graphs `" `graphs' "${git}/temp/`var'.gph" "'
     
   }
   
-  graph combine `graphs' , colf
+  foreach var of varlist ///
+    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+      local graphs `" `graphs' "${git}/temp/`var'.gph" "'
+  }
+  
+  graph combine `graphs' , colf altshrink ysize(5)
   graph export "${git}/output/descriptives.png" , width(3000) replace
     
 // Outpatients per provider quality
