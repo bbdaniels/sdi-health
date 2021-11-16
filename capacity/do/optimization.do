@@ -96,7 +96,7 @@ preserve
     
     graph export "${git}/output/optimization-providers-alt.png" , width(3000) replace
 restore     
-      -
+      
 /* Outlier checks in exact reallocation
   gen c_o = hf_outpatient_day
   gen c_n = cap
@@ -191,5 +191,5 @@ collapse (mean) irt1 c1 irt2 c2 [pweight=n] , by(country)
     country irt1 c1 irt2 c2 d1 d2 ///
     using "${git}/output/optimize-quality.xlsx" ///
   , replace first(varl)
-    
+
 //
