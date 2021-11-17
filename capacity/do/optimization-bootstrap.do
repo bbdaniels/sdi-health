@@ -136,22 +136,47 @@ preserve
   replace d2 = d2*100
   ren d2 effect_size
   collapse (mean) effect_size check ///
-    (semean) std_err =  effect_size ///
     (p95) _meta_ciu = effect_size ///
     (p5) _meta_cil = effect_size ///
     , by(country)
+    
+    gen std_err = (_meta_ciu - _meta_cil) / 4 
   
   append using "${git}/data/comparison.dta"
   
   ta effect_size check  , m
+  
+  // replace _meta_cil = 1 if _meta_cil < 1
+  // drop if effect_size < 1
+  
+  meta set effect_size std_err
+  
+  meta funnelplot if check != 1 & std_err < 30 ///
+  , addplot(scatter std_err effect_size  if check == 1 ///
+      , m(o) mc(red%50) mlc(black) mlw(vthin) msize(large)) ///
+        /// mlab(country) mlabpos(9) mlalign(outside) mlabangle(30) mlabc(black) mlabsize(tiny)) ///
+    mc(white) msize(small) mlc(black) mlw(vthin) random contours(1 5 10 , upper) ///
+    esop(ls(none))  yscale(noline) xscale(noline) title(" ") ///
+    ylab(0 5 10 15 20) ///
+    ytit("Standard Error") xtit("Effect Size (Percentage Points) and Significance Level (10%/5%/1%)")
+  
+    graph export "${git}/output/optimize-comparison.png" , width(3000) replace
+ 
+restore 
+-  
+  
+  
+  
+  su effect_size , d
 
     tw ///
-      (scatter  effect_size  std_err, mc(gray) ) ///
-      (rspike _meta_cil _meta_ciu std_err , lc(gray) lw(thin) ) ///
-      (rspike _meta_cil _meta_ciu std_err if check == 1, lc(red) lw(thin) ) ///
-      (scatter effect_size std_err if check == 1, mc(red)) ///
+      (scatter std_err effect_size  , mc(gray) ) ///
+      (rspike _meta_cil _meta_ciu std_err , hor lc(gray) lw(vthin) ) ///
+      (rspike _meta_cil _meta_ciu std_err if check == 1, hor lc(red) lw(vthin) ) ///
+      (scatter std_err effect_size  if check == 1, mc(red)) ///
       if std_err < 16 ///
-    , ytit("Percentage-point Improvement") xtit("Study Standard Error")
+    , ytit("Percentage-point Improvement") xtit("Study Standard Error") ///
+      xline(`r(p50)' `r(p75)')
       
 restore
 //
