@@ -85,6 +85,7 @@
 !**/*.xml
 !**/*.eps
 !**/*.svg
+!**/*.png
 
 #######################
 # Include all the files with passwords or tokens here. All files named
