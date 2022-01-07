@@ -53,9 +53,9 @@ use "${git}/data/knowledge.dta", clear
      
   graph box theta_mle ///
   , over(country, sort(med) descending axis(noli) label(labsize(small)))    ///
-    `styles' ///
+    `styles' medtype(cline) medline(lc(red) lw(thick)) ///
     box(1, fcolor(none) lcolor(black) lwidth(0.6)) marker(1, mlw(none) msize(vsmall) mcolor(black%10))     ///
-    yline(0, lwidth(thin) lcolor(black) lpattern(solid))                    ///
+     yline(0, lwidth(thin) lcolor(black) lpattern(solid))                    ///
     ylabel(-5(1)5 0 "Average", labsize(small) angle(0) nogrid)                           ///
     ytitle("Vignettes knowledge score {&rarr}", placement(left) justification(left) size(small))   ///
     legend(off) yscale(range(-5 5) titlegap(2)) bgcolor(white) graphregion(color(white)) asyvars   ///
@@ -81,7 +81,7 @@ use "${git}/data/knowledge.dta", clear
   graph box theta_mle ///
   , over(provider_cadre1, sort(provider_cadre1) axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
-    noout cwhi line(lw(vthin) lc(black)) al(0)  ///
+    noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
     box(1, lwidth(0.4) fcolor(none) lcolor(black*0.4))                             ///
     box(2, lwidth(0.4) fcolor(none) lcolor(black*0.7))                                 ///
     box(3, lwidth(0.4) fcolor(none) lcolor(black*1.0))                                 ///
@@ -136,7 +136,7 @@ use "${git}/data/knowledge.dta", clear
   graph box theta_mle ///
   , over(provider_mededuc1, sort(provider_mededuc1) axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
-    noout cwhi line(lw(vthin) lc(black)) al(0)  ///
+    noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
     box(1, lwidth(0.4) fcolor(none) lcolor(black*0.4))                             ///
     box(2, lwidth(0.4) fcolor(none) lcolor(black*0.7))                                 ///
     box(3, lwidth(0.4) fcolor(none) lcolor(black*1.0))                                 ///
