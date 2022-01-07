@@ -22,7 +22,7 @@
 ******************************/  
   
   *Open vignettes dataset 
-  use "${box}/Vignettes_pl.dta", clear   
+  use "${box}/data/Vignettes_pl.dta", clear   
   
   *Drop Kenya 2012 
   drop if cy ==  "KEN_2012"
@@ -259,6 +259,34 @@
  Save constructed dataset 
 ******************************/
 
-iecodebook export using "${git}/data/knowledge.xlsx", replace save sign verify
-    
+iecodebook export using "${git}/data/knowledge.xlsx" ///
+  , replace save sign verify 
+
+
+/*****************************
+ Save LONG dataset 
+******************************/
+
+  *Keep only the variables needed for the regression analysis 
+  keep countrycode survey_id countryfac_id diag* treat* provider_cadre  ///
+     provider_age1 facility_level_rec rural_rec public_rec advanced   ///
+     diploma 
+ 
+  drop treat_guidelines* treat_accuracy treat_observed /// these variables are not needed 
+     diag_accuracy treat_guidedate 
+  
+  *Rename treat and antibio variables 
+  rename treat* treat*_
+  rename diag*  diag*_
+  
+  *Reshape dataset from wide to long 
+  reshape long treat diag, i(survey_id) j(disease) string
+  replace disease = subinstr(disease, "_", "", .)
+
+  replace diag   = 1 if diag==100
+  replace treat   = 1 if treat==100
+  
+  iecodebook export using "${git}/data/knowledge-long.xlsx" ///
+    , replace save sign verify 
+      
 ************************************* End of do-file ******************************************************  
