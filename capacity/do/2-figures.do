@@ -42,7 +42,7 @@ use "${git}/data/capacity.dta", clear
   graph export "${git}/output/f-descriptives.png" , width(3000) replace
   
   
-// Inpatients
+// Figure. Facility caseloads and staff, by country
 
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_inpatient == . | hf_staff == 0
@@ -72,48 +72,9 @@ use "${git}/data/capacity.dta", clear
      xscale(log) yscale(log) xlab(1 "0-1" 10 100 1000 "1000+") ylab(1 "0-1" 10 100 1000 "1000+") ///
      legend(order(1 "Urban" 2 "Rural") symysize(*5) symxsize(*5))
      
-     graph export "${git}/output/caseload.png" , width(3000) replace
+     graph export "${git}/output/f-caseload.png" , width(3000) replace
 
-
-    
-// Outpatients per provider quality
-use "${git}/data/capacity.dta", clear
-
-  // collapse (mean) irt hf_outpatient hf_staff_op hf_type, by(country hf_id) fast
-  
-  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
-  // expand hf_staff_op
-  
-  drop if missing(hf_outpatient) | hf_outpatient == 0
-  replace hf_outpatient_day = 1 if hf_outpatient_day < 1
-  replace hf_outpatient_day = 100 if hf_outpatient_day > 100
-      
-      xtile c = irt , n(10)
-      
-  tw ///
-    (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
-    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
-    subtitle(,bc(none)) yscale(log noline) ///
-    ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
-    xlab(1 10) xtit("Competence Decile") ///
-    yline(3.2, lc(black)) xline(5.5 , lc(black))
-    
-        graph export "${git}/output/capacity-quality-new.png" , width(3000) replace
-
-
-  tw ///
-    (scatter irt2 hf_outpatient_day , mc(gray)  m(.) msize(vtiny)) ///
-    (lowess irt hf_outpatient_day , lc(red) lw(thick)) ///
-    , by(country, rescale ixaxes iyaxes legend(off) note(" ") c(2))  ///
-      xtit("Daily Provider Outpatients") ytit("Provider Competence") ///
-      xscale(log noline) xlab(1 "0-1" 10 100 "100+") ///
-      yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") ///
-      yscale(noline) subtitle(,bc(none)) ysize(6)
-      
-    graph export "${git}/output/capacity-quality.png" , width(3000) replace
-      
-// Outpatients per provider day
+// Figure. Daily caseload per provider, by facility sector and size
 use "${git}/data/capacity.dta", clear
 
   duplicates drop country hf_id , force
@@ -130,6 +91,28 @@ use "${git}/data/capacity.dta", clear
         order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
         0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
         
-    graph export "${git}/output/capacity-staff.png" , width(3000) replace
+    graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
+    
+// Setup: Current comparator for optimization
+use "${git}/data/capacity.dta", clear
 
+  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
+  
+  drop if missing(hf_outpatient) | hf_outpatient == 0
+  replace hf_outpatient_day = 1 if hf_outpatient_day < 1
+  replace hf_outpatient_day = 100 if hf_outpatient_day > 100
+      
+  xtile c = irt , n(10)
+      
+  tw ///
+    (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
+    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+    subtitle(,bc(none)) yscale(log noline) ///
+    ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
+    xlab(1 10) xtit("Competence Decile") ///
+    yline(3.2, lc(black)) xline(5.5 , lc(black))
+    
+    graph export "${git}/output/f-optimization-1.png" , width(3000) replace
+      
 // End      
