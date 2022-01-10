@@ -10,8 +10,7 @@ qui do "${git}/do/labelcollapse.ado"
 
 qui do "${git}/do/1-makedata.do"
 qui do "${git}/do/2-figures.do"
-qui do "${git}/do/3-descriptives.do"
-qui do "${git}/do/4-optimization.do"
-qui do "${git}/do/5-optimization-bootstrap.do"
+qui do "${git}/do/3-optimization.do"
+qui do "${git}/do/4-optimization-bootstrap.do"
 
 //
