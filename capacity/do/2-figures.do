@@ -1,3 +1,47 @@
+// Figures for paper
+
+// Figure. Descriptive statistics for facilities by sector
+
+use "${git}/data/capacity.dta", clear
+  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
+  
+  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
+      , by(country hf_id) vallab(hf_type)
+      
+  replace hf_inpatient = hf_inpatient/90
+    lab var hf_inpatient "Daily Inpatients"
+  replace hf_outpatient = hf_outpatient/90
+    lab var hf_outpatient "Daily Outpatients"
+    
+  replace hf_inpatient = . if hf_level == 1
+    
+    recode hf_level (2=3)(3=2)
+          
+  foreach var of varlist ///
+    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+      
+    local label : var label `var'
+  
+    graph hbox `var' ///
+      , by(hf_level , ixaxes rescale  imargin(zero) c(1) ///
+          title("`label'", pos(11) span) note(" ")) subtitle(" ", ring(0)) ///
+        over(hf_type ,  axis(noline) ) nofill note(" ") scale(0.7) subtitle(,bc(none)) ///
+        noout  nodraw ytit("") medtype(cline) medline(lc(red) lw(thick)) /// 
+        box(1 , fc(none) lc(black)) yscale(noline)
+        
+        graph save "${git}/temp/`var'.gph" , replace
+    
+  }
+  
+  foreach var of varlist ///
+    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+      local graphs `" `graphs' "${git}/temp/`var'.gph" "'
+  }
+  
+  graph combine `graphs' , colf altshrink ysize(5)
+  graph export "${git}/output/f-descriptives.png" , width(3000) replace
+  
+  
 // Inpatients
 
 use "${git}/data/capacity.dta", clear
@@ -30,44 +74,7 @@ use "${git}/data/capacity.dta", clear
      
      graph export "${git}/output/caseload.png" , width(3000) replace
 
-// Overall descriptives
 
-use "${git}/data/capacity.dta", clear
-  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
-  
-  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
-      , by(country hf_id) vallab(hf_type)
-      
-  replace hf_inpatient = hf_inpatient/90
-    lab var hf_inpatient "Daily Inpatients"
-  replace hf_outpatient = hf_outpatient/90
-    lab var hf_outpatient "Daily Outpatients"
-    
-    recode hf_level (2=3)(3=2)
-          
-  foreach var of varlist ///
-    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
-      
-    local label : var label `var'
-  
-    graph hbox `var' ///
-      , by(hf_level , ixaxes rescale  imargin(zero) c(1) ///
-          title("`label'", pos(11) span) note(" ")) subtitle(" ", ring(0)) ///
-        over(hf_type ,  axis(noline) ) nofill note(" ") scale(0.7) subtitle(,bc(none)) ///
-        noout  nodraw ytit("") /// 
-        box(1 , fc(none) lc(black))
-        
-        graph save "${git}/temp/`var'.gph" , replace
-    
-  }
-  
-  foreach var of varlist ///
-    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
-      local graphs `" `graphs' "${git}/temp/`var'.gph" "'
-  }
-  
-  graph combine `graphs' , colf altshrink ysize(5)
-  graph export "${git}/output/descriptives.png" , width(3000) replace
     
 // Outpatients per provider quality
 use "${git}/data/capacity.dta", clear
