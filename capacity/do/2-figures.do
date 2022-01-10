@@ -108,9 +108,9 @@ use "${git}/data/capacity.dta", clear
     (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
     (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
-    subtitle(,bc(none)) yscale(log noline) ///
-    ylab(1 "0-1" 3.2 "Median" 10 100 "100+") ytit("Outpatients per Day") ///
-    xlab(1 10) xtit("Competence Decile") ///
+    subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
+    ylab(1 "0-1" 3.2 "Median" 10 100 "100+", tl(0)) ytit("Outpatients per Day") ///
+    xlab(1 10, tl(0)) xtit("Competence Decile") ///
     yline(3.2, lc(black)) xline(5.5 , lc(black))
     
     graph export "${git}/output/f-optimization-1.png" , width(3000) replace

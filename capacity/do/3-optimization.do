@@ -190,5 +190,12 @@ collapse (mean) irt1 c1 irt2 c2 [pweight=n] , by(country)
     country irt1 c1 irt2 c2 d1 d2 ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(varl)
+  
+// Save for comparison
+
+  gen check = 1
+  ren d2 effect_size
+  replace effect_size=effect_size*100
+  save "${git}/temp/optimize-comparison.dta" , replace
 
 //
