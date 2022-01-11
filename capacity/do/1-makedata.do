@@ -20,7 +20,7 @@
 **************************************/
 
   *Open harmonized dataset 
-  use  "${box}/Intermediate/All_countries_harm.dta", clear    
+  use  "${box}/All_countries_harm.dta", clear    
   
   *Isolate the variables in which the dataset is unique 
   keep  cy country year facility_id provider_id unique_id  /// unique identifiers 
@@ -54,7 +54,7 @@
 **************************************/  
   
   *Merge varibles needed to provider level dataset 
-  merge 1:1 country year unique_id using "${box}/Intermediate/All_countries_pl.dta"
+  merge 1:1 country year unique_id using "${box}/All_countries_pl.dta"
   
   *Check that there are no unmatched observations 
   assert  _merge!= 1
@@ -73,7 +73,7 @@
   replace admin1_name_temp  = "Western"     if admin1_name_temp == "Western Rural" | admin1_name_temp == "Western Urban" 
   
   sort   country admin1_name_temp
-  merge m:1 country admin1_name_temp using "${box}/Intermediate/Poverty rates/poverty_rates.dta"
+  merge m:1 country admin1_name_temp using "${box}/poverty_rates.dta"
   drop if _merge ==2  // drop unmatched poverty rates from using dataset 
   drop   _merge     // _merge no longer needed 
    
@@ -89,7 +89,7 @@
   gen   unique_id2 = cy + "_" + unique_id 
    
   sort   unique_id2
-  merge   1:1 unique_id2 using "${box}/Final/IRT_parameters.dta", keepusing(theta_mle) 
+  merge   1:1 unique_id2 using "${box}/IRT_parameters.dta", keepusing(theta_mle) 
   drop   if _merge != 3     // drop providers that did not make the final merged module dataset 
   drop   _merge unique_id2   // these variables are not needed anymore 
   
@@ -214,7 +214,7 @@
   drop if country == "Cameroon" 
  
   *Save final dataset with new variables added 
-  save "${box}/Final/Final_pl.dta", replace 
+  save "${box}/Final_pl.dta", replace 
   
   /*****************************************************
     Create a vignettes only dataset 
@@ -233,7 +233,7 @@
       gpslat_all gpslong_all
       
   // Magic
-  iecodebook apply using "${box}/Final/provider-codebook.xlsx" , drop
+  iecodebook apply using "${box}/provider-codebook.xlsx" , drop
   
   *Order the variables 
   isid country year hf_id prov_id, sort
