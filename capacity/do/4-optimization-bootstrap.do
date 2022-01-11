@@ -145,7 +145,7 @@ preserve
   append using "${git}/data/comparison.dta"
   merge m:1 country check ///
     using "${git}/temp/optimize-comparison.dta" ///
-    , keepusing(effect_size) update
+    , keepusing(effect_size) update replace nogen
   
   ta effect_size check  , m
   
