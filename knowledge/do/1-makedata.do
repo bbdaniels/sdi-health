@@ -254,6 +254,9 @@
 
   lab var overall_questions_frac   "Average proportion of possible questions asked per vignette"
   lab var overall_exams_frac     "Average proportion of possible physical exams done per vignette"
+  
+  // Recode occupation by education
+  replace provider_cadre1 = 1 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
      
 /*****************************
  Save constructed dataset 
