@@ -256,6 +256,9 @@
   lab var overall_exams_frac     "Average proportion of possible physical exams done per vignette"
   
   // Recode occupation by education
+  replace provider_cadre = 2 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
+  replace doctor = 1 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
+  replace other = 0 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
   replace provider_cadre1 = 1 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
      
 /*****************************
@@ -263,7 +266,7 @@
 ******************************/
 
 iecodebook export using "${git}/data/knowledge.xlsx" ///
-  , replace save sign verify 
+  , replace save sign verify reset
 
 
 /*****************************
@@ -290,6 +293,6 @@ iecodebook export using "${git}/data/knowledge.xlsx" ///
   replace treat   = 1 if treat==100
   
   iecodebook export using "${git}/data/knowledge-long.xlsx" ///
-    , replace save sign verify 
+    , replace save sign verify reset
       
 ************************************* End of do-file ******************************************************  
