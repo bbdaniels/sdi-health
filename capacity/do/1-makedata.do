@@ -212,6 +212,9 @@
   
   *Drop Cameroon from the sample 
   drop if country == "Cameroon" 
+  
+  // Remove inaccurate private obs
+  drop if public == 0 & (country == "Guinea Bissau" | country == "Mozambique")
  
   *Save final dataset with new variables added 
   save "${box}/Final_pl.dta", replace 

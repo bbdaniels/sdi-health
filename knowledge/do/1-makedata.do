@@ -260,6 +260,9 @@
   replace doctor = 1 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
   replace other = 0 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
   replace provider_cadre1 = 1 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
+  
+  // Remove inaccurate private obs
+  drop if public == 0 & (country == "Guinea Bissau" | country == "Mozambique")
      
 /*****************************
  Save constructed dataset 
