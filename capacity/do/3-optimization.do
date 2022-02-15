@@ -1,8 +1,141 @@
-// Resorting current capacities
+// Part 1: Resorting current capacities
+
+// Calculate new capacity per day at each provider based on resorting
+use "${git}/data/capacity.dta", clear
+  drop if hf_type == . | hf_outpatient == 0
+  gen cap = hf_outpatient/(90*hf_staff_op)
+    drop if cap == .
+  
+  tempfile irt all
+  keep country irt cap hf_type hf_level hf_rural public treat?
+  save `all'
+
+qui {
+  // Capacity adjustment resort    
+  collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+    merge 1:m country hf_level using `all' , nogen
+    gsort country hf_level -irt
+    gen tot = n/new
+    bys country hf_level : gen cap_bigger = new if _n <= tot
+      replace cap_bigger = 0 if cap_bigger == .
+      gen irt_bigger = irt
+      drop n tot new
+      
+  // Restricted to type resort
+  preserve
+  gsort country hf_type -irt
+    keep country hf_type irt
+    ren irt irt_hftype
+    gen ser_hftype = _n
+    save `irt' , replace
+  restore
+  
+  gsort country hf_type -cap
+    gen cap_hftype = cap
+    gen ser_hftype = _n
+    merge 1:1 ser_hftype using `irt' , nogen
+  
+  // Unrestricted resort
+  preserve
+  gsort country -irt
+    keep country irt cap
+    ren irt irt_unrest
+    gen ser_unrest = _n
+    save `irt' , replace
+  restore
+  
+  gsort country -cap
+    gen cap_unrest = cap
+    gen ser_unrest = _n
+    merge 1:1 ser_unrest using `irt' , nogen
+    
+  // Restricted to level resort
+  preserve
+  gsort country hf_level -irt
+    keep country hf_level irt cap
+    ren irt irt_levels
+    gen ser_levels = _n
+    save `irt' , replace
+  restore
+  
+  gsort country hf_level -cap
+    gen cap_levels = cap
+    gen ser_levels = _n
+    merge 1:1 ser_levels using `irt' , nogen
+    
+  // Restricted to zone resort
+  preserve
+  gsort country hf_rural -irt
+    keep country hf_rural irt cap
+    ren irt irt_rururb
+    gen ser_rururb = _n
+    save `irt' , replace
+  restore
+  
+  gsort country hf_rural -cap
+    gen cap_rururb = cap
+    gen ser_rururb = _n
+    merge 1:1 ser_rururb using `irt' , nogen
+  
+  // Restricted to sector resort
+  preserve
+  gsort country public -irt
+    keep country public irt cap
+    ren irt irt_public
+    gen ser_public = _n
+    save `irt' , replace
+  restore
+  
+  gsort country public -cap
+    gen cap_public = cap
+    gen ser_public = _n
+    merge 1:1 ser_public using `irt' , nogen
+}
+    
+// Create comparative statistics
+
+  ren (irt cap) (irt_old cap_old)
+    egen c = rowmean(treat?)
+    reg c c.irt_old##i.country 
+
+  preserve
+    collapse irt_old [aweight=cap_old] , by(country)
+      predict c
+      ren c irt_xxx
+      reshape long irt , i(country) j(x) string
+    save `all' , replace
+  restore
+  
+  foreach type in unrest hftype levels rururb public {
+    preserve
+      collapse irt_`type' [aweight=cap_`type'] , by(country)
+        gen irt_old = irt_`type'
+        predict c
+        ren c irt_xxx
+        drop irt_old
+        reshape long irt , i(country) j(x) string
+        ren irt irt_`type'
+        replace x = "_old" if x != "_xxx"
+      merge 1:1 country x using `all' , nogen
+      save `all' , replace
+    restore
+  }
+  
+  use `all' , clear
+    egen mean = rowmean(irt_*)
+    gen dif = mean - irt
+  
+  export excel ///
+    using "${git}/output/t-optimize-quality.xlsx" ///
+  , replace first(var)
+
+**************************************************
+// Part 2: Vizualizations for sectoral restriction
+**************************************************
 
 tempfile now
 
-// Calculate sectoral shares
+// Calculate sectoral shares and current quality
 use "${git}/data/capacity.dta", clear
 
 duplicates drop country hf_id , force
@@ -16,7 +149,7 @@ duplicates drop country hf_id , force
     , by(country hf_type) 
     
   bys country: egen temp = sum(n)
-  replace n = n/temp
+  gen share = n/temp
     drop temp
     
   save `now' , replace
@@ -38,27 +171,6 @@ use "${git}/data/capacity.dta", clear
     merge 1:1 country hf_type using `now' , keep(3) nogen
     save `now' , replace
   restore
-  
-// Calculate new capacity per day at each provider based on resorting
-  gen cap = hf_outpatient/(90*hf_staff_op)
-  
-    sort country hf_type hf_id
-    
-    preserve
-    gsort country hf_type -irt
-      keep country hf_type irt cap
-      ren cap hf_outpatient_day
-      gen serial = _n
-      tempfile irt
-      save `irt' , replace
-    restore
-    
-    gsort country hf_type -cap 
-      ren irt irt_old
-      keep country hf_type cap irt_old
-      gen serial = _n
-
-    merge 1:1 country hf_type serial using `irt' , nogen
       
 // Create optimized allocation images
 preserve
@@ -186,10 +298,7 @@ collapse (mean) irt1 c1 irt2 c2 [pweight=n] , by(country)
   lab var d1 "Difference"
   lab var d2 "Difference"
   
-  export excel ///
-    country irt1 c1 irt2 c2 d1 d2 ///
-    using "${git}/output/t-optimize-quality.xlsx" ///
-  , replace first(varl)
+  
   
 // Save for comparison
 
