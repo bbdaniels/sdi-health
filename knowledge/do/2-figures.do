@@ -5,7 +5,7 @@ use "${git}/data/knowledge.dta", clear
 
   tw ///
     (scatter percent_correctd theta_mle , jitter(10) m(x) mc(black%5)) ///
-    (lpolyci percent_correctd theta_mle ,               ///
+    (lpolyci percent_correctd theta_mle [aweight = weight] ,               ///
       degree(1) lw(thick) lcolor(red) ciplot(rline)         ///
       alcolor(black) alwidth(thin) alpat(dash))           ///
   , graphregion(color(white))                                               ///
@@ -19,7 +19,7 @@ use "${git}/data/knowledge.dta", clear
   
   tw ///
     (scatter percent_correctt theta_mle , jitter(10) m(x) mc(black%5))   ///
-    (lpolyci percent_correctt theta_mle ,                 ///
+    (lpolyci percent_correctt theta_mle [aweight = weight],                 ///
       degree(1) lw(thick) lcolor(red) ciplot(rline)           ///
       alcolor(black) alwidth(thin) alpat(dash))             ///
   , graphregion(color(white))                                             ///
@@ -51,7 +51,7 @@ use "${git}/data/knowledge.dta", clear
     local styles "`styles' box(`i', fcolor(none) lcolor(black) lwidth(0.4)) marker(`i', mlw(none) msize(vsmall) mcolor(black%10)) "
   }
      
-  graph box theta_mle ///
+  graph box theta_mle [pweight=weight] ///
   , over(country, sort(med) descending axis(noli) label(labsize(small)))    ///
     `styles' medtype(cline) medline(lc(red) lw(thick)) ///
     box(1, fcolor(none) lcolor(black) lwidth(0.6)) marker(1, mlw(none) msize(vsmall) mcolor(black%10))     ///
@@ -78,7 +78,7 @@ use "${git}/data/knowledge.dta", clear
     local ken_med  = `r(p50)' 
     gen prov_kenya  = (theta_mle >= `ken_med')
   
-  graph box theta_mle ///
+  graph box theta_mle [pweight=weight] ///
   , over(provider_cadre1, sort(provider_cadre1) axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
     noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
@@ -95,7 +95,7 @@ use "${git}/data/knowledge.dta", clear
     
     graph save "${git}/temp/f-cadre_1.gph", replace 
     
-  graph bar prov_kenya,                                           ///
+  graph bar prov_kenya [pweight=weight],                                           ///
     over(provider_cadre1, axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                     ///
     bar(1, lc(none) fcolor(black*0.4))                                   ///
@@ -133,7 +133,7 @@ use "${git}/data/knowledge.dta", clear
     local ken_med  = `r(p50)' 
     gen prov_kenya  = (theta_mle >= `ken_med')
   
-  graph box theta_mle ///
+  graph box theta_mle [pweight=weight] ///
   , over(provider_mededuc1, sort(provider_mededuc1) axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
     noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
@@ -150,7 +150,7 @@ use "${git}/data/knowledge.dta", clear
     
     graph save "${git}/temp/f-education_1.gph", replace 
     
-  graph bar prov_kenya,                                           ///
+  graph bar prov_kenya [pweight=weight],                                           ///
     over(provider_mededuc1, axis(noli) label(nolabel))                       ///
     over(country, sort(med) descending axis(noli) label(labsize(small)))                     ///
     bar(1, lc(none) fcolor(black*0.4))                                   ///
@@ -191,9 +191,9 @@ histogram provider_age1, by(country , ixaxes note(" ") ///
   barwidth(4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%") yscale(alt) yscale(alt axis(2)) ///
   xlab(20(10)70  , labsize(vsmall)) ///
   ytit(" ") xtit(" ") ///
-  addplot((fpfit theta_mle provider_age1, lc(red) lw(thick) yaxis(2)) ///
-    (fpfit upq provider_age1, lc(red) yaxis(2) ) ///
-    (fpfit loq provider_age1, lc(red) yaxis(2))) ///
+  addplot((fpfit theta_mle provider_age1 [pweight=weight], lc(red) lw(thick) yaxis(2)) ///
+    (fpfit upq provider_age1 [pweight=weight], lc(red) yaxis(2) ) ///
+    (fpfit loq provider_age1 [pweight=weight], lc(red) yaxis(2))) ///
   legend(r(1) region(lw(none)) pos(12) order(1 "Age (Right)"  2 "Knowledge Mean" 3 "25th / 75th Percentiles") size(small))
   
   graph export "${git}/outputs/f-age-knowledge.png", replace width(2000)   
@@ -216,9 +216,9 @@ histogram provider_age1, by(country , ixaxes note(" ") ///
   barwidth(4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%" 40 "40%" 50 "50%" 60 "60%" 70 "70%") ///
   xlab(20(10)70 , labsize(vsmall)) ///
   ytit(" ") xtit(" ") ///
-  addplot((fpfit percent_correctt provider_age1, lc(red) lw(thick)) ///
-    (fpfit upq provider_age1, lc(red) ) ///
-    (fpfit loq provider_age1, lc(red) )) ///
+  addplot((fpfit percent_correctt provider_age1 [pweight=weight], lc(red) lw(thick)) ///
+    (fpfit upq provider_age1 [pweight=weight], lc(red) ) ///
+    (fpfit loq provider_age1 [pweight=weight], lc(red) )) ///
   legend(r(1) region(lw(none)) pos(12) order(1 "Age"  2 "Treatment Mean" 3 "25th / 75th Percentiles") size(small))
   
   graph export "${git}/outputs/f-age-treatment.png", replace width(2000)   

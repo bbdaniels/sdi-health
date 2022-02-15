@@ -3,7 +3,7 @@
 // Table. Sample description
 use "${git}/data/knowledge.dta", clear
 
-  table () country , ///
+  table () country  [pweight=weight], ///
     stat( mean rural public hospital health_ce health_po ///
       doctor nurse other advanced diploma certificate) ///
     stat( count public)
@@ -17,15 +17,15 @@ use "${git}/data/knowledge.dta", clear
   use "${git}/data/knowledge.dta", clear  
   replace provider_age1 = provider_age1/10
    
-    reg   theta_mle i.provider_cadre provider_age1 advanced diploma, vce(cluster survey_id)
+    reg   theta_mle i.provider_cadre provider_age1 advanced diploma [pweight=weight], vce(cluster survey_id)
     eststo   theta_mle1
     estadd  local hascout  "No"
       
-      reg   theta_mle i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec, vce(cluster survey_id)
+      reg   theta_mle i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight], vce(cluster survey_id)
       eststo   theta_mle2
       estadd  local hascout  "No"
 
-      areg   theta_mle i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec, ab(countrycode) cluster(survey_id)
+      areg   theta_mle i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight], ab(countrycode) cluster(survey_id)
       eststo   theta_mle3
       estadd  local hascout  "Yes"
       
@@ -33,27 +33,27 @@ use "${git}/data/knowledge.dta", clear
   use "${git}/data/knowledge-long.dta", clear  
   replace provider_age1 = provider_age1/10
 
-    reg   treat i.provider_cadre provider_age1 advanced diploma, vce(cluster survey_id)
+    reg   treat i.provider_cadre provider_age1 advanced diploma [pweight=weight], vce(cluster survey_id)
     eststo   treat1
     estadd  local hascout  "No"
     
-      reg   treat i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec,  vce(cluster survey_id)
+      reg   treat i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight],  vce(cluster survey_id)
       eststo   treat2
       estadd  local hascout  "No"
       
-      areg   treat i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec, ab(countrycode) cluster(survey_id)
+      areg   treat i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight], ab(countrycode) cluster(survey_id)
       eststo   treat3
       estadd  local hascout  "Yes"
     
-    reg   diag i.provider_cadre provider_age1 advanced diploma, vce(cluster survey_id)
+    reg   diag i.provider_cadre provider_age1 advanced diploma [pweight=weight], vce(cluster survey_id)
     eststo   diag1
     estadd  local hascout  "No"
     
-      reg    diag i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec, vce(cluster survey_id)
+      reg    diag i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight], vce(cluster survey_id)
       eststo   diag2
       estadd  local hascout  "No"
       
-      areg  diag i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec, ab(countrycode) cluster(survey_id)
+      areg  diag i.provider_cadre provider_age1 advanced diploma i.facility_level_rec i.rural_rec i.public_rec [pweight=weight], ab(countrycode) cluster(survey_id)
       eststo   diag3
       estadd  local hascout  "Yes"
 

@@ -263,6 +263,10 @@
   
   // Remove inaccurate private obs
   drop if public == 0 & (country == "Guinea Bissau" | country == "Mozambique")
+  
+  // Create country-equal weights
+  bys country: gen weight = 1/_N
+    lab var weight "Country Weight"
      
 /*****************************
  Save constructed dataset 
@@ -279,7 +283,7 @@ iecodebook export using "${git}/data/knowledge.xlsx" ///
   *Keep only the variables needed for the regression analysis 
   keep countrycode survey_id countryfac_id diag* treat* provider_cadre  ///
      provider_age1 facility_level_rec rural_rec public_rec advanced   ///
-     diploma 
+     diploma weight
  
   drop treat_guidelines* treat_accuracy treat_observed /// these variables are not needed 
      diag_accuracy treat_guidedate 
