@@ -11,7 +11,7 @@ use "${git}/data/capacity.dta", clear
   clonevar irt_old = irt
   
   collapse (mean) hf_outpatient_day hf_inpatient_day hf_staff_op irt_old ///
-    (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
+    (rawsum) cap_old , by(country hf_type)
 
   gen c2 = hf_outpatient_day/hf_staff_op
   egen temp = sum(cap_old) , by(country)
