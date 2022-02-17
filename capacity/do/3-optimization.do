@@ -13,7 +13,7 @@ use "${git}/data/capacity.dta", clear
   collapse (mean) hf_outpatient_day hf_inpatient_day hf_staff_op irt_old ///
     (rawsum) cap_old , by(country hf_type)
     
-    drop if hf_type == .
+    drop if hf_type == . | cap_old == 0
 
   gen c2 = hf_outpatient_day/hf_staff_op
   egen temp = sum(cap_old) , by(country)
