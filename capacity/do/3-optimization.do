@@ -1,4 +1,34 @@
-// Part 1: Resorting current capacities
+**************************************************
+// Part 1: Capacity optimization methods
+**************************************************
+
+// Summary table: Sectoral
+use "${git}/data/capacity.dta", clear  
+
+  gen hf_outpatient_day = hf_outpatient/90
+  gen hf_inpatient_day = hf_inpatient/90
+  clonevar cap_old = hf_outpatient_day
+  clonevar irt_old = irt
+  
+  collapse (mean) hf_outpatient_day hf_inpatient_day hf_staff_op irt_old ///
+    (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
+
+  gen c2 = hf_outpatient_day/hf_staff_op
+  egen temp = sum(cap_old) , by(country)
+  gen n = cap_old/temp
+ 
+  lab var n "Share"
+  lab var irt_old "Knowledge"
+  lab var hf_outpatient_day "Mean Daily Outpatients" 
+  lab var hf_inpatient_day "Mean Daily Inpatients" 
+  lab var hf_staff_op "Mean Outpatient Staff" 
+  lab var c2 "Mean Outpatients per Staff" 
+ 
+  export excel ///
+    country hf_type n irt hf_outpatient_day  ///
+    hf_inpatient_day hf_staff_op c2  ///
+  using "${git}/output/t-optimize-capacity.xlsx" ///
+  , replace first(varl)
 
 // Calculate new capacity per day at each provider based on resorting
 use "${git}/data/capacity.dta", clear
@@ -7,7 +37,8 @@ use "${git}/data/capacity.dta", clear
     drop if cap == .
   
   tempfile irt all
-  keep country irt cap hf_type hf_level hf_rural public treat?
+  keep country irt cap hf_type hf_level hf_rural public ///
+    hf_staff_op hf_outpatient hf_inpatient treat?
   save `all'
 
 qui {
@@ -91,12 +122,16 @@ qui {
     gen ser_public = _n
     merge 1:1 ser_public using `irt' , nogen
 }
-    
-// Create comparative statistics
 
   ren (irt cap) (irt_old cap_old)
     egen c = rowmean(treat?)
     reg c c.irt_old##i.country 
+    
+  save "${git}/data/capacity-optimized.dta" , replace
+  
+// Create comparative statistics
+use "${git}/data/capacity-optimized.dta" , clear
+  tempfile all
 
   preserve
     collapse irt_old [aweight=cap_old] , by(country)
@@ -128,58 +163,24 @@ qui {
   export excel ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(var)
+  
+  save "${git}/data/capacity-comparison.dta" , replace
 
 **************************************************
 // Part 2: Vizualizations for sectoral restriction
 **************************************************
 
-tempfile now
-
 // Calculate sectoral shares and current quality
-use "${git}/data/capacity.dta", clear
+use "${git}/data/capacity-optimized.dta", clear
 
-duplicates drop country hf_id , force
-  drop if hf_type == . | hf_outpatient == 0
-  
-  gen hf_outpatient_day = hf_outpatient/(90)
-  gen hf_inpatient_day = hf_inpatient/(90)
-
-  collapse (mean) hf_outpatient_day hf_inpatient_day hf_staff_op ///
-           (rawsum) n = hf_outpatient ///
-    , by(country hf_type) 
-    
-  bys country: egen temp = sum(n)
-  gen share = n/temp
-    drop temp
-    
-  save `now' , replace
-
-// Calculate current quality    
-use "${git}/data/capacity.dta", clear
-
-  drop if hf_type == . | hf_outpatient == 0
-   
-  // Calculate outpatients per provider day at each facility
-  gen hf_outpatient_day = hf_outpatient/(90)
-    drop if hf_outpatient_day == 0 | hf_outpatient_day == .
-    lab var hf_outpatient_day "Outpatients Per Day"
-  
-  // Get current quality levels
-  preserve
-    collapse (mean) irt  ///
-      [aweight=hf_outpatient_day], by(country hf_type) 
-    merge 1:1 country hf_type using `now' , keep(3) nogen
-    save `now' , replace
-  restore
-      
 // Create optimized allocation images
-preserve
 
   // Size histogram
   tw ///
-    (histogram hf_outpatient_day , frac yaxis(2) color(gs12) start(0) w(5) gap(10) lsty(none)) ///
-    (lowess irt cap , lc(black) lw(thick))(lowess irt_old hf_outpatient_day , lc(black) lp(dash) lw(thick)) ///
-    if hf_outpatient_day < 40 & cap < 40 ///
+    (histogram cap_old , frac yaxis(2) color(gs12) start(0) w(5) gap(10) lsty(none)) ///
+    (lowess irt_hftype cap_hftype , lc(black) lw(thick)) ///
+    (lowess irt_old cap_old , lc(black) lp(dash) lw(thick)) ///
+    if cap_old < 40 & cap_old < 40 ///
   , by(country , noyrescale xrescale ixaxes r(2) legend(on pos(12)) note(" ") )  ///
     subtitle(,bc(none)) ///
     xscale(noline) ///
@@ -192,13 +193,13 @@ preserve
     graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
               
   // Scatter bands       
-  xtile c = irt , n(10)
-    replace cap = 1 if cap < 1
-    replace cap = 100 if cap > 100
+  xtile band = irt_hftype , n(10)
+    replace cap_hftype = 1 if cap_hftype < 1
+    replace cap_hftype = 100 if cap_hftype > 100
 
   tw ///
-    (mband cap c , lc(red) lw(vthick) ) ///
-    (scatter cap c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+    (mband cap_hftype band , lc(red) lw(vthick) ) ///
+    (scatter cap_hftype band , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
     subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
     ylab(1 "0-1" 3.2 "Median" 10 100 "100+" , tl(0)) ytit("Outpatients per Day") ///
@@ -206,7 +207,6 @@ preserve
     yline(3.2, lc(black)) xline(5.5 , lc(black)) 
     
     graph export "${git}/output/f-optimization-2.png" , width(3000) replace
-restore     
       
 /* Outlier checks in exact reallocation
   gen c_o = hf_outpatient_day
@@ -218,88 +218,109 @@ restore
 */
 
 // Calculate new quality
-collapse (mean) irt_new = irt (rawsum) n2 = cap ///
-  [aweight=cap], by(country hf_type) 
+use "${git}/data/capacity-optimized.dta", clear
+tempfile all
 
-  merge 1:1 country hf_type using `now' , nogen
+  preserve
+    collapse (mean) irt_old (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
+    save `all' , replace
+  restore
+  
+  foreach type in unrest hftype levels rururb public {
+    preserve
+      collapse irt_`type' [aweight=cap_`type'] , by(country hf_type)
+      merge 1:1 country hf_type using `all' , nogen
+      save `all' , replace
+    restore
+  }
+  
+  use `all' , clear
+  
+  egen temp = sum(cap_old) , by(country)
+  gen n = cap_old/temp
   
 // Visualize sectoral changes
          
   local style msize(small)
   tw ///
-    (pcarrow irt n irt_new n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
-    (pcarrow irt n irt_new n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
-    (pcarrow irt n irt_new n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
-    (pcarrow irt n irt_new n if hf_type == 4 , `style' mang(30) lc(red) mc(red)) ///
-    (pcarrow irt n irt_new n if hf_type == 5 , `style' mang(60) lc(red) mc(red)) ///
-    (pcarrow irt n irt_new n if hf_type == 6 , `style' mang(90) lc(red) mc(red)) ///
-  , by(country , c(2) rescale ixaxes note(" ")  ///
-       legend(ring(0) pos(12))) subtitle(,bc(none)) ysize(6) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 4 , `style' mang(30) lc(red) mc(red)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 5 , `style' mang(60) lc(red) mc(red)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 6 , `style' mang(90) lc(red) mc(red)) ///
+    if irt_old != irt_hftype ///
+  , by(country , r(2) rescale ixaxes note(" ")  ///
+       legend(ring(0) pos(12))) subtitle(,bc(none)) xsize(6) ///
     xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
-    xlab(0 "0%" .25 "25%" .5 "50%") xscale(noline) ///
-    yline(0 , lc(black) lw(thin)) ylab(0 "Mean" 1.113 "{&uarr}10%" -1.243 "{&darr}10%") yscale(noline) ///
+    xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%") xscale(noline) ///
+    yline(0 , lc(black) lw(thin)) ylab(-2 -1 1 2 3 0 "Mean") yscale(noline) ///
     legend(size(small) symxsize(small) c(4) ///
       order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
             0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
             
     graph export "${git}/output/f-optimize-differences.png" , width(3000) replace
+
+**************************************************
+// Part 3: Resort bootstrap and comparison
+**************************************************
+  tempfile results
+  use "${git}/data/capacity-comparison.dta" , clear
+    keep if x == "_old"
+    ren irt irt_old
+    keep irt_hftype irt_old country
+      gen true = 1
+    save `results' , replace
+    
+  // Load data
+  tempfile all irt
+  use "${git}/data/capacity.dta", clear
+    drop if hf_type == . | hf_outpatient == 0
+    gen cap = hf_outpatient/(90*hf_staff_op)
+      drop if cap == .
+      ren cap cap_old
+    bys country hf_type : gen n = _n
+    save `all' , replace
+
+  // Random runs
+  qui forv i = 1/10 {
+  use `all' , clear
+    // Set up bootstrap sample  
+    keep country hf_type irt
+    gen r = rnormal()
+    sort country hf_type r
+    bys country hf_type : gen n = _n
+      merge 1:1 country hf_type n using `all' , nogen keepusing(cap)
+    
+    // Optimize
+    preserve
+    gsort country hf_type -irt
+      keep country hf_type irt
+      ren irt irt_hftype
+      gen ser_hftype = _n
+      save `irt' , replace
+    restore
+    
+    gsort country hf_type -cap_old
+      gen cap_hftype = cap_old
+      gen ser_hftype = _n
+      merge 1:1 ser_hftype using `irt' , nogen
+        
+    // Calculate improvements
+      preserve
+        collapse irt_old = irt [aweight=cap_old] , by(country)
+        save `irt' , replace
+      restore
       
-// Results table: Sectoral
+      collapse irt_hftype [aweight=cap_hftype] , by(country)
+          merge 1:1 country using `irt' , nogen
+          
+      append using `results'
+        save `results' , replace  
+  }
+  
+  use `results' , clear
 
-  ren irt_new irt_sim_a
- 
-  gen da = irt_sim_a - irt
-  gen c2 = hf_outpatient_day/hf_staff_op
- 
-  lab var n "Share"
-  lab var irt "Knowledge"
-  lab var irt_sim_a "Optimal"
-  lab var da "Difference"
-  
-  lab var hf_outpatient_day "Mean Daily Outpatients" 
-  lab var hf_inpatient_day "Mean Daily Inpatients" 
-  lab var hf_staff_op "Mean Outpatient Staff" 
-  lab var c2 "Mean Outpatients per Staff" 
- 
-  export excel ///
-    country hf_type n irt hf_outpatient_day  ///
-    hf_inpatient_day hf_staff_op c2  ///
-  using "${git}/output/t-optimize-capacity.xlsx" ///
-  , replace first(varl)
- 
-  save "${git}/temp/sim-results.dta" , replace
-       
-// Results table: National
-use "${git}/data/capacity.dta", clear
-
-  // Get regression quality estimate
-  egen c = rowmean(treat?)
-  reg c c.irt##i.country 
-
-use "${git}/temp/sim-results.dta" , clear
-  ren (irt irt_sim_a) (irt1 irt2)
-  
-  reshape long irt , i(country hf_type) j(irtx)
-  
-  predict c
-  
-  reshape wide irt c, i(country hf_type) j(irtx)
-
-collapse (mean) irt1 c1 irt2 c2 [pweight=n] , by(country)
-  lab var irt1 "Knowledge"
-  lab var irt2 "Optimal"
-  
-  lab var c1 "Quality"
-  lab var c2 "Optimal"
-  
-  gen d1 = irt2 - irt1
-  gen d2 = c2 - c1
-  
-  lab var d1 "Difference"
-  lab var d2 "Difference"
-  
-  
-  
 // Save for comparison
 
   gen check = 1
