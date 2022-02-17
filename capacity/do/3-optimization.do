@@ -254,7 +254,7 @@ tempfile all
        legend(ring(0) pos(12))) subtitle(,bc(none)) xsize(6) ///
     xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
     xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%") xscale(noline) ///
-    yline(0 , lc(black) lw(thin)) ylab(-2 -1 1 2 3 0 "Mean") yscale(noline) ///
+    yline(0 , lc(black) lw(thin)) ylab(-2 "-2 SD" -1 "-1 SD" 1 "+1 SD" 2 "+2 SD" 3 "+3 SD" 0 "Mean") yscale(noline) ///
     legend(size(small) symxsize(small) c(4) ///
       order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
             0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
