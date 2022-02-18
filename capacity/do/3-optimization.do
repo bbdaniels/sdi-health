@@ -267,62 +267,62 @@ tempfile all
 **************************************************
 // Part 3: Resort bootstrap and comparison
 **************************************************
-  tempfile results
   use "${git}/data/capacity-comparison.dta" , clear
-    keep if x == "_old"
+    keep if x == "_xxx"
     ren irt irt_old
-    keep irt_hftype irt_old country
-      gen true = 1
-    save `results' , replace
     
-  // Load data
-  tempfile all irt
-  use "${git}/data/capacity.dta", clear
-    drop if hf_type == . | hf_outpatient == 0
-    gen cap = hf_outpatient/(90*hf_staff_op)
-      drop if cap == .
-      ren cap cap_old
-    bys country hf_type : gen n = _n
-    save `all' , replace
-
-  // Random runs
-  qui forv i = 1/10 {
-  use `all' , clear
-    // Set up bootstrap sample  
-    keep country hf_type irt
-    gen r = rnormal()
-    sort country hf_type r
-    bys country hf_type : gen n = _n
-      merge 1:1 country hf_type n using `all' , nogen keepusing(cap)
+    egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_bigger)
+    egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_bigger)
+    clonevar effect_size = mean
     
-    // Optimize
-    preserve
-    gsort country hf_type -irt
-      keep country hf_type irt
-      ren irt irt_hftype
-      gen ser_hftype = _n
-      save `irt' , replace
-    restore
+    replace _meta_ciu = _meta_ciu - irt_old
+    replace _meta_cil = _meta_cil - irt_old
+    replace effect_size = effect_size - irt_old
     
-    gsort country hf_type -cap_old
-      gen cap_hftype = cap_old
-      gen ser_hftype = _n
-      merge 1:1 ser_hftype using `irt' , nogen
-        
-    // Calculate improvements
-      preserve
-        collapse irt_old = irt [aweight=cap_old] , by(country)
-        save `irt' , replace
-      restore
-      
-      collapse irt_hftype [aweight=cap_hftype] , by(country)
-          merge 1:1 country using `irt' , nogen
-          
-      append using `results'
-        save `results' , replace  
-  }
+    replace _meta_ciu = _meta_ciu * 100
+    replace _meta_cil = _meta_cil * 100
+    replace effect_size = effect_size * 100
+    
+    keep country _meta_ciu _meta_cil effect_size
+    
+    append using "${git}/data/comparison.dta" , gen(sgroup)
   
-  use `results' , clear
+   replace std_err = (_meta_ciu - _meta_cil) / 4 
+   
+   decode country, gen(temp)
+     replace CountryName = temp if temp !=""
+   meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
+   
+   replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
+   
+   gen region = " SDI Study"
+   replace region = "Africa" if WHO_Region2 == "AFRO"
+   replace region = "Americas" if WHO_Region2 == "AMRO"
+   replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
+   replace region = "South Asia" if WHO_Region2 == "SEARO"
+   replace region = "Western Pacific" if WHO_Region2 == "WPRO"
+   drop if WHO_Region2 == "EURO"
+   
+  
+   meta forest _id _esci _plot if effect_size < 50 ///
+     & (region == " SDI Study" | region == "Africa") ///
+   , subgroup(region) sort(effect_size) ///
+     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+     ciopts(lc(gs12) mstyle(none)) 
+     
+   
+     graph export "${git}/output/f-lit-1.png" , replace
+   
+   meta forest _id _esci _plot if effect_size < 50 ///
+     & !(region == " SDI Study" | region == "Africa") ///
+   , subgroup(region) sort(effect_size) ///
+     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+     ciopts(lc(gs12) mstyle(none)) 
+     
+     graph export "${git}/output/f-lit-2.png" , replace
+
 
 // Save for comparison
 
