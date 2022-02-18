@@ -143,7 +143,7 @@ use "${git}/data/capacity-optimized.dta" , clear
     save `all' , replace
   restore
   
-  foreach type in unrest hftype levels rururb public {
+  qui foreach type in bigger unrest hftype levels rururb public {
     preserve
       collapse irt_`type' [aweight=cap_`type'] , by(country)
         gen irt_old = irt_`type'
@@ -162,7 +162,8 @@ use "${git}/data/capacity-optimized.dta" , clear
     egen mean = rowmean(irt_*)
     gen dif = mean - irt
   
-  export excel ///
+  export excel country x ///
+    irt mean dif irt_hftype irt_rururb irt_levels irt_public irt_unrest irt_bigger ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(var)
   
