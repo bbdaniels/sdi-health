@@ -15,7 +15,6 @@ use "${git}/data/knowledge.dta", clear
     xlabel(-5 (1) 5) xscale(noli) note("")     legend(off)
     
     graph save "${git}/temp/treat_scatter_1.gph", replace  
-
   
   tw ///
     (scatter percent_correctt theta_mle , jitter(10) m(x) mc(black%5))   ///
@@ -40,136 +39,90 @@ use "${git}/data/knowledge.dta", clear
 // Figure. Box plot for knowledge score   
 use "${git}/data/knowledge.dta", clear
   
-  bys country: egen med = median(theta_mle)
-  
   expand 2 , gen(total)
     replace country = "Full Sample" if total == 1
-    replace med = 10 if total == 1
-      
-  local styles ""
-  forvalues i = 2/12 {
-    local styles "`styles' box(`i', fcolor(none) lcolor(black) lwidth(0.4)) marker(`i', mlw(none) msize(vsmall) mcolor(black%10)) "
-  }
-     
-  graph box theta_mle [pweight=weight] ///
-  , over(country, sort(med) descending axis(noli) label(labsize(small)))    ///
-    `styles' medtype(cline) medline(lc(red) lw(thick)) ///
-    box(1, fcolor(none) lcolor(black) lwidth(0.6)) marker(1, mlw(none) msize(vsmall) mcolor(black%10))     ///
-     yline(0, lwidth(thin) lcolor(black) lpattern(solid))                    ///
-    ylabel(-5(1)5 0 "Average", labsize(small) angle(0) nogrid)                           ///
-    ytitle("Vignettes knowledge score {&rarr}", placement(left) justification(left) size(small))   ///
-    legend(off) yscale(range(-5 5) titlegap(2)) bgcolor(white) graphregion(color(white)) asyvars   ///
-    showyvars horizontal
+  
+  vioplot theta_mle [pweight=weight] ///
+  , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
+    xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
+    yscale(noline) xscale(noline) xlab(-5(1)5 0 "Av.", labsize(small) notick) ///
+    den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
+    line(lw(none)) med(m(|) mc(red) msize(large))
     
   graph export "${git}/outputs/f-quantile.png", replace width(2000)
   
 // Figure. Quantile distributions by cadre
 use "${git}/data/knowledge.dta", clear
 
-  bys country: egen med = median(theta_mle)
-  
   expand 2 , gen(total)
     replace country = "Full Sample" if total == 1
-    replace med = 10 if total == 1  
-    
-  recode provider_cadre1 (1=4)(4=1)
+
   // Kenya Nurses Reference 
   summarize theta_mle if country == "Kenya" & provider_cadre1 == 3, d
     local ken_med  = `r(p50)' 
     gen prov_kenya  = (theta_mle >= `ken_med')
+    
+  qui levelsof(country) , local(countries)
+  foreach x in `countries' {
+    qui mean prov_kenya if country == "`x'" [pweight=weight]
+      local a = r(table)[1,1]
+      local pct = substr("`a'",2,2)
+
+    vioplot theta_mle if country == "`x'" [pweight=weight] ///
+    , over(provider_cadre1) xline(-5(1)5,lc(black) lw(thin))  hor ///
+      yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
+      yscale(noline) xscale(off) xlab(-5(1)5 0 "Av.", labsize(small)) ///
+      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
+      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
+  }
   
-  graph box theta_mle [pweight=weight] ///
-  , over(provider_cadre1, sort(provider_cadre1) axis(noli) label(nolabel))                       ///
-    over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
-    noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
-    box(1, lwidth(0.4) fcolor(none) lcolor(black*0.4))                             ///
-    box(2, lwidth(0.4) fcolor(none) lcolor(black*0.7))                                 ///
-    box(3, lwidth(0.4) fcolor(none) lcolor(black*1.0))                                 ///
-    graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid)   ///
-    legend(order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )                ///
-      pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small))     ///
-    yscale(range(-3 3) titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)        ///
-    ylabel(-3 "-3" -2 "-2" -1 "-1" 0 "0" 1 "1" 2 "2" 3 "3" , labsize(small))               ///
-    yline(`ken_med', lwidth(thin) lcolor(black) lpattern(solid))                       ///
-    ytitle("Vignette knowledge score {&rarr}", size(small)) allcategories  note("")  
+  graph combine ///
+    "${git}/temp/Full Sample.gph" "${git}/temp/Malawi.gph" ///
+    "${git}/temp/Kenya.gph" "${git}/temp/Tanzania.gph" ///
+    "${git}/temp/Togo.gph" "${git}/temp/Guinea Bissau.gph" ///
+    "${git}/temp/Madagascar.gph" "${git}/temp/Uganda.gph" ///
+    "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
+    "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
+  , xcom c(1) ysize(5) imargin(zero)
     
-    graph save "${git}/temp/f-cadre_1.gph", replace 
-    
-  graph bar prov_kenya [pweight=weight],                                           ///
-    over(provider_cadre1, axis(noli) label(nolabel))                       ///
-    over(country, sort(med) descending axis(noli) label(labsize(small)))                     ///
-    bar(1, lc(none) fcolor(black*0.4))                                   ///
-    bar(2, lc(none) fcolor(black*0.7))                                   ///
-    bar(3, lc(none) fcolor(black*1.0))                                   ///
-    bargap(20) yline(.5 , lwidth(thin) lcolor(black) lpattern(solid)) ///
-    graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid)   ///
-    legend(on order(1 "Para-Professional" 2 "Nurse"  3 "Doctor" )                      ///
-      pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) size(small))       ///
-    yscale(titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)              ///
-    ylabel(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%"  1 "100%", labsize(small))             ///
-    ytitle("Share outperformed median Kenyan nurse {&rarr}", size(small)) allcategories  note("")  
-    
-    graph save "${git}/temp/f-cadre_2.gph", replace 
-    
-  grc1leg ///
-    "${git}/temp/f-cadre_1.gph" ///
-    "${git}/temp/f-cadre_2.gph" ///
-  , graphregion(color(white)) legendfrom("${git}/temp/f-cadre_2.gph") pos(12)
-      
-    graph export "${git}/outputs/f-cadre.png", replace width(2000) 
-  
-  
+  graph export "${git}/outputs/f-cadre.png", replace width(2000) 
+
 // Figure. Quantile distributions by education
 use "${git}/data/knowledge.dta", clear
 
-  bys country: egen med = median(theta_mle)
-  
+  drop if country == "Uganda"
   expand 2 , gen(total)
     replace country = "Full Sample" if total == 1
-    replace med = 10 if total == 1  
     
   // Kenya Diploma Reference 
   summarize theta_mle if country == "Kenya" & provider_mededuc1 == 3, d
     local ken_med  = `r(p50)' 
     gen prov_kenya  = (theta_mle >= `ken_med')
+    
+  qui levelsof(country) , local(countries)
+  foreach x in `countries' {
+    qui mean prov_kenya if country == "`x'" [pweight=weight]
+      local a = r(table)[1,1]
+      local pct = substr("`a'",2,2)
+
+    vioplot theta_mle if country == "`x'" [pweight=weight] ///
+    , over(provider_mededuc1)  xline(-5(1)5,lc(black) lw(thin))  hor ///
+      xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
+      yscale(noline) xscale(off)  xlab(-5(1)5 0 "Av.", labsize(small)) ///
+      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
+      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
+  }
   
-  graph box theta_mle [pweight=weight] ///
-  , over(provider_mededuc1, sort(provider_mededuc1) axis(noli) label(nolabel))                       ///
-    over(country, sort(med) descending axis(noli) label(labsize(small)))                       ///
-    noout cwhi line(lw(vthin) lc(black)) al(0) medtype(cline) medline(lc(red) lw(thick)) ///
-    box(1, lwidth(0.4) fcolor(none) lcolor(black*0.4))                             ///
-    box(2, lwidth(0.4) fcolor(none) lcolor(black*0.7))                                 ///
-    box(3, lwidth(0.4) fcolor(none) lcolor(black*1.0))                                 ///
-    graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid)   ///
-    legend(order(3 "Para-Professional" 2 "Nurse"  1 "Doctor" )                ///
-      pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) symx(4) symy(2) size(small))     ///
-    yscale(range(-3 3) titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)        ///
-    ylabel(-3 "-3" -2 "-2" -1 "-1" 0 "0" 1 "1" 2 "2" 3 "3" , labsize(small))               ///
-    yline(`ken_med', lwidth(thin) lcolor(black) lpattern(solid))                       ///
-    ytitle("Vignette knowledge score {&rarr}", size(small)) allcategories  note("")  
-    
-    graph save "${git}/temp/f-education_1.gph", replace 
-    
-  graph bar prov_kenya [pweight=weight],                                           ///
-    over(provider_mededuc1, axis(noli) label(nolabel))                       ///
-    over(country, sort(med) descending axis(noli) label(labsize(small)))                     ///
-    bar(1, lc(none) fcolor(black*0.4))                                   ///
-    bar(2, lc(none) fcolor(black*0.7))                                   ///
-    bar(3, lc(none) fcolor(black*1.0))                                   ///
-    bargap(20) yline(.5 , lwidth(thin) lcolor(black) lpattern(solid)) ///
-    graphregion(color(white)) ytitle(, placement(left) justification(left)) ylabel(, angle(0) nogrid)   ///
-    legend(on order(1 "Certificate" 2 "Diploma"  3 "Advanced" )                      ///
-      pos(6) ring(1) r(1) region(lwidth(0.2) fc(none) lc(none)) size(small))       ///
-    yscale(titlegap(2)) bgcolor(white) asyvars showyvars horizontal  ysize(6)              ///
-    ylabel(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%"  1 "100%", labsize(small))             ///
-    ytitle("Share outperformed median Kenyan diploma {&rarr}", size(small)) allcategories  note("")  
-    
-    graph save "${git}/temp/f-education_2.gph", replace 
-    
-  grc1leg ///
-    "${git}/temp/f-education_1.gph" ///
-    "${git}/temp/f-education_2.gph" ///
-  , graphregion(color(white)) legendfrom("${git}/temp/f-education_2.gph") pos(12)
+  graph combine ///
+    "${git}/temp/Full Sample.gph" "${git}/temp/Malawi.gph" ///
+    "${git}/temp/Kenya.gph" "${git}/temp/Tanzania.gph" ///
+    "${git}/temp/Togo.gph" "${git}/temp/Guinea Bissau.gph" ///
+    "${git}/temp/Madagascar.gph"  ///
+    "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
+    "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
+  , xcom c(1) ysize(5) imargin(zero)
       
     graph export "${git}/outputs/f-education.png", replace width(2000)   
   

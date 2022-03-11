@@ -6,6 +6,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 // Installs etc
 
 cap ssc install iefieldkit
+cap ssc install vioplot
 
 // Raw data flag
 
