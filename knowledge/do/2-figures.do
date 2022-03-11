@@ -79,7 +79,7 @@ use "${git}/data/knowledge.dta", clear
 
   gen x = 0
   scatter x x in 1 , m(i) xlab(-5(1)5 , notick) ///
-    xscale(noline) yscale(noline) ytit(" ") xtit(" ") nodraw ///
+    xscale(noline alt) yscale(noline) ytit(" ") xtit(" ") nodraw ///
     saving("${git}/temp/blank.gph" , replace) ///
     ylab(1 "Doctor" , labc(white%0) labsize(small) notick) 
       
@@ -91,7 +91,7 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
     "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
     "${git}/temp/blank.gph"  ///
-  , xcom c(1) ysize(5) imargin(zero)
+  , xcom c(1) ysize(7) imargin(zero)
     
   graph export "${git}/outputs/f-cadre.png", replace width(2000) 
 
@@ -124,7 +124,7 @@ use "${git}/data/knowledge.dta", clear
   
   gen x = 0
   scatter x x in 1 , m(i) xlab(-5(1)5 , notick) ///
-    xscale(noline) yscale(noline) ytit(" ") xtit(" ") nodraw ///
+    xscale(noline alt) yscale(noline) ytit(" ") xtit(" ") nodraw ///
     saving("${git}/temp/blank.gph" , replace) ///
     ylab(1 "Certificate" , labc(white%0) labsize(small) notick) 
   
@@ -136,7 +136,7 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
     "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
     "${git}/temp/blank.gph"  ///
-  , xcom c(1) ysize(5) imargin(zero)
+  , xcom c(1) ysize(7) imargin(zero)
       
     graph export "${git}/outputs/f-education.png", replace width(2000)   
   
