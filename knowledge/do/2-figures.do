@@ -44,7 +44,7 @@ use "${git}/data/knowledge.dta", clear
   
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
-    xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
+    yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
     yscale(noline) xscale(noline) xlab(-5(1)5 0 "Av.", labsize(small) notick) ///
     den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
     line(lw(none)) med(m(|) mc(red) msize(large))
