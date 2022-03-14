@@ -45,9 +45,9 @@ use "${git}/data/knowledge.dta", clear
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
     yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
-    yscale(noline) xscale(noline) xlab(-5(1)5 0 "Av.", labsize(small) notick) ///
-    den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-    line(lw(none)) med(m(|) mc(red) msize(large))
+    yscale(noline) xscale(noline) xlab(-5(1)5 0 , labsize(small) notick) ///
+    den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+    line(lw(none)) med(m(|) mc(white) msize(large))
     
   graph export "${git}/outputs/f-quantile.png", replace width(2000)
   
@@ -72,8 +72,8 @@ use "${git}/data/knowledge.dta", clear
     , over(provider_cadre1) xline(-5(1)5,lc(black) lw(thin))  hor ///
       yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
       yscale(noline) xscale(off) xlab(-5(1)5 0 "Av.", labsize(small)) ///
-      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+      line(lw(none)) med(m(|) mc(white) msize(large)) ///
       title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
   }
 
@@ -117,8 +117,8 @@ use "${git}/data/knowledge.dta", clear
     , over(provider_mededuc1)  xline(-5(1)5,lc(black) lw(thin))  hor ///
       xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
       yscale(noline) xscale(off)  xlab(-5(1)5 0 "Av.", labsize(small)) ///
-      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+      line(lw(none)) med(m(|) mc(white) msize(large)) ///
       title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
   }
   
