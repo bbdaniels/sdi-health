@@ -1,6 +1,62 @@
 // Figures for knowledge paper
 
+// Figure. Weight
+use "${git}/data/knowledge.dta", clear
+
+  keep *history*
+
+  qui foreach var of varlist *history* {
+    qui count if !missing(`var')
+    if r(N) < 10000 {
+      drop `var' 
+    }
+    else {
+      drop if missing(`var')
+    }
+  }
+  
+  order * , seq
+  qui pca *history*
+    screeplot , mc(black) lc(black) xtit(" ") ytit(" " , size(zero)) xlab(none) xscale(r(0)) ///
+    title("Panel A: PCA Component Eigenvalues", placement(left) justification(left) span) 
+      graph save "${git}/temp/validation-1.gph", replace
+      
+    estat loadings
+      mat a = r(A)
+      
+    collapse * , fast
+      xpose, clear
+      gen s = _n
+      tempfile mean
+      save `mean'
+    
+    clear
+    svmat a
+      gen s = _n
+      merge 1:1 s using `mean'
+      
+      egen x = sum(a1)
+      replace a1 = a1/x
+      
+      scatter a1 v1 , mc(black) yscale(r(0)) ylab(#6) ///
+        xtit("Share of providers asking each history question {&rarr}", placement(left) justification(left)) ///
+        xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%" 1 "100%") ///
+        xoverhang ///
+        ytit(" " , size(zero)) /// 
+        ylab(0 "0%" 0.005 "0.5%" .01 "1.0%" .015 "1.5%" .02 "2.0%" 0.025 "2.5%" ) ///
+        title("Panel B: Index weights for history question components", placement(left) justification(left) span)
+        
+        graph save "${git}/temp/validation-2.gph", replace
+        
+        graph combine ///
+          "${git}/temp/validation-1.gph" ///
+          "${git}/temp/validation-2.gph" ///
+          , c(1) ysize(5)
+          
+          graph export "${git}/outputs/validation-pca.png", replace
+
 // Figure. Internal consistency
+use "${git}/data/knowledge.dta", clear
 
   local graphs ""
   local x = 1
