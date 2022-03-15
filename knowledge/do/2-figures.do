@@ -58,20 +58,27 @@ use "${git}/data/knowledge.dta", clear
 // Figure. Internal consistency
 use "${git}/data/knowledge.dta", clear
 
+  egen check = rowmean(*history*)
+  lab var check 
+
   local graphs ""
   local x = 1
   foreach var of varlist ///
     diarrhea_history_duration diarrhea_history_othersick ///
     pneumonia_history_coughdur diabetes_history_numblimb tb_history_sputum ///
-    tb_history_night_sweats pph_history_pph malaria_history_fevertype {
-      local graphs "`graphs' (lpoly `var' theta_mle , lw(thick) yaxis(2))"
+    tb_history_night_sweats pph_history_pph malaria_history_fevertype ///
+    check {
+      
+      if "`var'" == "check" local style "lc(black) lw(vthick)"
+      local graphs "`graphs' (lpoly `var' theta_mle , `style' yaxis(2))"
       
       local ++x
       local label : var label `var'
       local t = upper(substr("`var'",1,strpos("`var'","_")-1))
       local label = subinstr("`label'","History","`t'",.)
-      local legend `"`legend' `x' "`label'"  "'
+      if "`var'" != "check" local legend `"`legend' `x' "`label'"  "'
     }
+    
 
     histogram theta_mle,  ///
       start(-5) w(.5) fc(gs12) lc(none) ///
@@ -79,8 +86,8 @@ use "${git}/data/knowledge.dta", clear
       ylab(0 "0%" .25 "25%" .5 "50%" .75 "75%" 1 "100%" , axis(2)) ///
       xlab(-5(1)5) yscale(alt) yscale(alt axis(2)) ///
       ytit(" ") xtitle("Vignettes knowledge score {&rarr}", placement(left) justification(left)) ///
-    addplot(`graphs') ///
-      legend(on order(1 "Score distribution (Right Scale)" 0 `legend') c(2) size(vsmall) symxsize(small) span)
+    addplot( `graphs' ) ///
+      legend(on order(1 "Score distribution (Right Scale)" 10 "All history questions for vignettes" `legend') c(2) size(vsmall) symxsize(small) span)
 
       graph export "${git}/outputs/f-validation.png", replace 
 
