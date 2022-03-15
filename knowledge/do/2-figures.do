@@ -18,7 +18,8 @@ use "${git}/data/knowledge.dta", clear
   order * , seq
   qui pca *history*
     screeplot , mc(black) lc(black) xtit(" ") ytit(" " , size(zero)) xlab(none) xscale(r(0)) ///
-    title("Panel A: PCA Component Eigenvalues", placement(left) justification(left) span) 
+    title("Panel A: PCA Component Eigenvalues", placement(left) justification(left) span) ///
+    addplot(scatteri 7.6823 1 "{&larr} First principal component" , m(none) mlabc(black))
       graph save "${git}/temp/validation-1.gph", replace
       
     estat loadings
