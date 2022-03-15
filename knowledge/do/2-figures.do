@@ -53,7 +53,7 @@ use "${git}/data/knowledge.dta", clear
           "${git}/temp/validation-2.gph" ///
           , c(1) ysize(5)
           
-          graph export "${git}/outputs/validation-pca.png", replace
+          graph export "${git}/outputs/f-validation-pca.png", replace
 
 // Figure. Internal consistency
 use "${git}/data/knowledge.dta", clear
