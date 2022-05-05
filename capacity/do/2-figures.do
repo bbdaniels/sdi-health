@@ -73,18 +73,31 @@ use "${git}/data/capacity.dta", clear
 
   duplicates drop country hf_id , force
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
-
-  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
   
-  binscatter hf_outpatient_day hf_staff_op ///
-    , by(hf_type) line(qfit) n(4) colors(black black%60 black%40 red red%60 red%40 ) ///
-      m(T O D T O D)  ///
-      xlab(1 5 10 15) ylab(0 2 4 6 8 10) ///
-      xtit("Staff Serving Outpatients") ytit("Daily Outpatients per Staff") ///
-      legend(on pos(12) c(4) size(small) ///
-        order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
-        0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
-        
+  gen hf_outpatient_day = hf_outpatient/90
+  gen hf_inpatient_day = hf_inpatient/90
+  clonevar cap_old = hf_outpatient_day
+  clonevar theta_mle = irt
+  gen check = hf_outpatient_day/hf_staff_op
+  
+  replace check = 1 if check < 1
+  replace check = 160 if check > 160
+  
+  levelsof country_string , local(l)
+  local x = 0
+    foreach level in `l' {
+      local ++x
+      local legend `"`legend' `x' "`level'" "'
+    }
+  
+  cdfplot check if check > 0 ///
+  , by(country_string) xlog xscale(log) xlab(1 2.5 5 10 20 40 80 160, labgap(2) labsize(small) notick) ///
+    legend(on c(1) pos(3) size(small) symxsize(small) order(`legend') region(lp(blank))) xscale(noline ) yscale(noline ) ///
+    ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) yline(0 .25 .5 .75 1 , lc(gs14) lw(thin)) ///
+    ytit("Share of providers busier than...") xtit("... X patients per day {&rarr}" , placement(w)) xline(1 2.5 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
+    opt1( yscale(reverse) xscale(reverse)  ///
+      lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red ))
+
     graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
     
 // Setup: Current comparator for optimization
