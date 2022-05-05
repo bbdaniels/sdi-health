@@ -41,7 +41,7 @@ use "${git}/data/capacity.dta", clear
 // Figure. Facility caseloads and staff, by country
 
 use "${git}/data/capacity.dta", clear
-  drop if hf_outpatient == . | hf_inpatient == . | hf_staff == 0
+  drop if hf_outpatient == . | hf_inpatient == . | hf_staff == 0 | hf_staff_op == 0
   
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_rural ///
       , by(country hf_id) vallab(hf_type)
@@ -52,23 +52,21 @@ use "${git}/data/capacity.dta", clear
       replace hf_inpatient = 1 if hf_inpatient < 1
       replace hf_outpatient = 1 if hf_outpatient < 1
       
-      replace hf_outpatient = 1000 if hf_outpatient > 1000
+      replace hf_outpatient = 100 if hf_outpatient > 100
       replace hf_inpatient = 1000 if hf_inpatient > 1000 & !missing(hf_inpatient)
-
+      
+      replace hf_staff_op = 10 if hf_staff_op > 10
+      
   tw ///
-   (scatter hf_inpatient hf_outpatient [pweight= hf_staff] ///
-     if hf_inpatient >= 1 & hf_outpatient >= 1 & hf_rural == 0 ///
-     , m(Oh) mlc(red) mlw(thin)) ///
-   (scatter hf_inpatient hf_outpatient [pweight= hf_staff] ///
-     if hf_inpatient >= 1 & hf_outpatient >= 1 & hf_rural == 1 ///
-     , m(Oh) mlc(black) mlw(thin)) ///
-   , ysize(6) subtitle(,bc(none)) by(country , ///
-       rescale ixaxes iyaxes legend(on) note(" ") c(2) scale(0.7) subtitle(,bc(none))) ///
-     xtit("Outpatients per Day") ytit("Inpatients per Day") ///
-     xscale(log) yscale(log) xlab(1 "0-1" 10 100 1000 "1000+") ylab(1 "0-1" 10 100 1000 "1000+") ///
-     legend(order(1 "Urban" 2 "Rural") symysize(*5) symxsize(*5))
+    (scatter  hf_staff_op hf_outpatient if hf_rural == 0, jitter(2) m(.) mc(red%40) mlw(none)) ///
+    (scatter  hf_staff_op hf_outpatient if hf_rural == 1, jitter(2) m(Oh) mc(black%40) mlw(none)) ///
+  , by(country  , r(2) note(" ") iyaxes ixaxes legend(pos(12))) ///
+    xtit("Total Outpatients per Day") ytit("Outpatient Staff") ///
+    ylab(0.5 " " 1(1)9 10 "10+" , tlength(0) labgap(2)) yscale( noline) ///
+    xscale(log) xlab(1 "0-1" 10 100  "100+") xoverhang ///
+    legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox)
      
-     graph export "${git}/output/f-caseload.png" , width(3000) replace
+    graph export "${git}/output/f-caseload.png" , width(3000) replace
 
 // Figure. Daily caseload per provider, by facility sector and size
 use "${git}/data/capacity.dta", clear
