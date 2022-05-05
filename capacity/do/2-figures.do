@@ -13,34 +13,31 @@ use "${git}/data/capacity.dta", clear
   replace hf_outpatient = hf_outpatient/90
     lab var hf_outpatient "Daily Outpatients"
     
+    lab var irt "Mean Provider Knowledge"
+    
   replace hf_inpatient = . if hf_level == 1
     
     recode hf_level (2=3)(3=2)
+    local hf_absent `"xlab(0 "0%" .5 "50%" 1 "100%")"'
           
   foreach var of varlist ///
     hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
       
     local label : var label `var'
   
-    graph hbox `var' ///
-      , by(hf_level , ixaxes rescale  imargin(zero) c(1) ///
-          title("`label'", pos(11) span) note(" ")) subtitle(" ", ring(0)) ///
-        over(hf_type ,  axis(noline) ) nofill note(" ") scale(0.7) subtitle(,bc(none)) ///
-        noout  nodraw ytit("") medtype(cline) medline(lc(red) lw(thick)) /// 
-        box(1 , fc(none) lc(black)) yscale(noline)
-        
-        graph save "${git}/temp/`var'.gph" , replace
-    
-  }
-  
-  foreach var of varlist ///
-    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+    winsor `var' , gen(`var'2) p(0.01)
+    vioplot `var'2 , over(hf_type) nofill hor ylab(,angle(0)) nodraw ///
+      title("`label'", pos(11) span) scale(0.7) ///
+      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+      line(lw(none)) med(m(|) mc(white) msize(large)) ``var''
+
+      graph save "${git}/temp/`var'.gph" , replace
       local graphs `" `graphs' "${git}/temp/`var'.gph" "'
   }
   
-  graph combine `graphs' , colf altshrink ysize(5)
+  graph combine `graphs' , colf  ysize(5)
   graph export "${git}/output/f-descriptives.png" , width(3000) replace
-  
+  -
   
 // Figure. Facility caseloads and staff, by country
 
