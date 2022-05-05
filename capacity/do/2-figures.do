@@ -37,7 +37,6 @@ use "${git}/data/capacity.dta", clear
   
   graph combine `graphs' , colf  ysize(5)
   graph export "${git}/output/f-descriptives.png" , width(3000) replace
-  -
   
 // Figure. Facility caseloads and staff, by country
 
