@@ -103,23 +103,40 @@ use "${git}/data/capacity.dta", clear
 // Setup: Current comparator for optimization
 use "${git}/data/capacity.dta", clear
 
-  gen hf_outpatient_day = hf_outpatient/(90*hf_staff_op)
+  gen hf_outpatient_day = hf_outpatient/90
+  gen hf_inpatient_day = hf_inpatient/90
+  clonevar cap_old = hf_outpatient_day
+  clonevar theta_mle = irt
+  gen check = hf_outpatient_day/hf_staff_op
+  bys country: gen weight = 1/_N
   
-  drop if missing(hf_outpatient) | hf_outpatient == 0
-  replace hf_outpatient_day = 1 if hf_outpatient_day < 1
-  replace hf_outpatient_day = 100 if hf_outpatient_day > 100
-      
-  xtile c = irt , n(10)
-      
-  tw ///
-    (mband hf_outpatient_day c , lc(red) lw(vthick)) ///
-    (scatter hf_outpatient_day c , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
-    subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
-    ylab(1 "0-1" 3.2 "Median" 10 100 "100+", tl(0)) ytit("Outpatients per Day") ///
-    xlab(1 10, tl(0)) xtit("Competence Decile") ///
-    yline(3.2, lc(black)) xline(5.5 , lc(black))
+  keep if check != . & theta_mle != .
+  keep theta_mle check country hf_type weight
+     
+  mean theta_mle [pweight=check*weight]
+    local old = r(table)[1,1]
+  
+  bys country hf_type (theta_mle): gen srno = _n
+    tempfile irtrank
+    save `irtrank'
+  drop srno 
+  ren theta_mle theta_old
+  bys country hf_type (check): gen srno = _n
+    merge 1:1 country hf_type srno using `irtrank'
+ 
+  mean theta_mle [pweight=check*weight]
+   local new = r(table)[1,1]
+
+  tw (histogram theta_mle , w(0.5) start(-5) gap(10) lw(none) fc(gs12) yaxis(2) percent) ///
+    (fpfit check theta_mle [pweight=weight], lc(black) lw(thick)) ///
+    (fpfit check theta_old [pweight=weight], lp(dash) lw(thick) lc(red)) ///
+    (pci 0 `new' 25 `new' , yaxis(2) lc(black) lw(thick)) ///
+    (pci 0 `old' 25 `old' , yaxis(2) lc(red) lw(thick) lp(dash)) /// 
+  ,  yscale(alt) yscale(alt  axis(2)) ytitle("Percentage of Providers (Histogram)" , axis(2)) ///
+    ytitle("Average Patients per Day") xtit("Vignettes Knowledge Score (Vertical Lines = Means)") ///
+    legend(on pos(12) order(3 "Original Assignment" 2 "Optimized by Country/Sector") size(small) region(lp(blank))) ///
+    xlab(-5(1)5) ylab(0 50 100 150 200 250) ylab(0(5)25 , axis(2))
     
-    graph export "${git}/output/f-optimization-1.png" , width(3000) replace
+    graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
       
 // End      

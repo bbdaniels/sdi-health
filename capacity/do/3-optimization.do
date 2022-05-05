@@ -177,23 +177,6 @@ use "${git}/data/capacity-optimized.dta" , clear
 use "${git}/data/capacity-optimized.dta", clear
 
 // Create optimized allocation images
-
-  // Size histogram
-  tw ///
-    (histogram cap_old , frac yaxis(2) color(gs12) start(0) w(5) gap(10) lsty(none)) ///
-    (lowess irt_hftype cap_hftype , lc(black) lw(thick)) ///
-    (lowess irt_old cap_old , lc(black) lp(dash) lw(thick)) ///
-    if cap_old < 40 & cap_old < 40 ///
-  , by(country , noyrescale xrescale ixaxes r(2) legend(on pos(12)) note(" ") )  ///
-    subtitle(,bc(none)) ///
-    xscale(noline) ///
-    xlab(0 10 20 30 40)  xtit("Outpatients per Day") ///
-    ylab(0 "0%" .20 "20%" .40 "40%" .60 "60%" .80 "80%", angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
-    ylab(-4 "-4 SD" -2 "-2 SD" 0 "Mean" 2 "+2 SD") ///
-    ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt) ///
-    legend(pos(12) r(1) size(small) order(3 "Actual" 2 "Optimal" 1 "Percentage of Providers (Right Axis)"))
-           
-    graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
               
   // Scatter bands       
   xtile band = irt_hftype , n(10)
