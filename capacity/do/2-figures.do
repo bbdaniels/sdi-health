@@ -61,7 +61,7 @@ use "${git}/data/capacity.dta", clear
     (scatter  hf_staff_op hf_outpatient if hf_rural == 0, jitter(2) m(.) mc(red%40) mlw(none)) ///
     (scatter  hf_staff_op hf_outpatient if hf_rural == 1, jitter(2) m(Oh) mc(black%40) mlw(none)) ///
   , by(country  , r(2) note(" ") iyaxes ixaxes legend(pos(12))) ///
-    xtit("Total Outpatients per Day") ytit("Outpatient Staff") ///
+    xtit("Total Outpatients per Day") ytit("Number of Outpatient Staff") ///
     ylab(0.5 " " 1(1)9 10 "10+" , tlength(0) labgap(2)) yscale( noline) ///
     xscale(log) xlab(1 "0-1" 10 100  "100+") xoverhang ///
     legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox)
