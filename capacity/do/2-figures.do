@@ -124,10 +124,10 @@ use "${git}/data/capacity.dta", clear
  
   mean theta_mle [pweight=check*weight]
    local new = r(table)[1,1]
-
+   
   tw (histogram theta_mle , w(0.5) start(-5) gap(10) lw(none) fc(gs12) yaxis(2) percent) ///
     (fpfit check theta_mle [pweight=weight], lc(black) lw(thick)) ///
-    (fpfit check theta_old [pweight=weight], lp(dash) lw(thick) lc(red)) ///
+    (fpfit check theta_old [pweight=weight], lp(dash) lw(thick) lc(black)) ///
     (pci 0 `new' 25 `new' , yaxis(2) lc(black) lw(thick)) ///
     (pci 0 `old' 25 `old' , yaxis(2) lc(red) lw(thick) lp(dash)) /// 
   ,  yscale(alt) yscale(alt  axis(2)) ytitle("Percentage of Providers (Histogram)" , axis(2)) ///

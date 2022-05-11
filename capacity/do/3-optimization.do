@@ -182,15 +182,41 @@ use "${git}/data/capacity-optimized.dta", clear
   xtile band = irt_hftype , n(10)
     replace cap_hftype = 1 if cap_hftype < 1
     replace cap_hftype = 100 if cap_hftype > 100
+    
+  xtile band0 = irt_old , n(10)
+    replace cap_old = 1 if cap_old < 1
+    replace cap_old = 100 if cap_old > 100
+    
+    qui su cap_old , d
+    gen fake1 = `r(p50)'
+    gen fake0 = 1
+    
+    sort band0
+    gen check = band0
+    replace check = 5.5 if check == 4 
 
   tw ///
-    (mband cap_hftype band , lc(red) lw(vthick) ) ///
+    (rarea fake1 fake0 check if check > 5 , lc(black) fc(red) ) ///
+    (mband cap_old band0 , lc(black) lw(vthick) lp(dash)) ///
+    (scatter cap_old band0 , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
+    subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
+    ylab(1 "0-1" `r(p50)' "Median" 10 100 "100+" , tl(0)) ytit("Outpatients per Day") ///
+    xlab(1 5.5 "Median" 10 , tl(0)) xtit("Competence Decile") ///
+    yline(`r(p50)', lc(black)) xline(5.5 , lc(black)) 
+    
+    graph export "${git}/output/f-optimization-1.png" , width(3000) replace
+    
+    qui su cap_old , d
+    
+  tw ///
+    (mband cap_hftype band , lc(black) lw(vthick) ) ///
     (scatter cap_hftype band , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
     subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
     ylab(1 "0-1" 3.2 "Median" 10 100 "100+" , tl(0)) ytit("Outpatients per Day") ///
     xlab(1 5.5 "Median" 10 , tl(0)) xtit("Competence Decile") ///
-    yline(3.2, lc(black)) xline(5.5 , lc(black)) 
+    yline(`r(p50)', lc(black)) xline(5.5 , lc(black)) 
     
     graph export "${git}/output/f-optimization-2.png" , width(3000) replace
       
