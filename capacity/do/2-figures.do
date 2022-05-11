@@ -92,8 +92,8 @@ use "${git}/data/capacity.dta", clear
   , by(country_string) xlog xscale(log) xlab(1 2.5 5 10 20 40 80 160, labgap(2) labsize(small) notick) ///
     legend(on c(1) pos(3) size(small) symxsize(small) order(`legend') region(lp(blank))) xscale(noline ) yscale(noline ) ///
     ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) yline(0 .25 .5 .75 1 , lc(gs14) lw(thin)) ///
-    ytit("Share of providers busier than...") xtit("... X patients per day {&rarr}" , placement(w)) xline(1 2.5 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
-    opt1( yscale(reverse) xscale(reverse)  ///
+    ytit("Share of providers who see at least...") xtit("... X patients per day {&rarr}" , placement(w)) xline(1 2.5 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
+    opt1( yscale(reverse)  ///
       lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red ))
 
     graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
