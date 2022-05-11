@@ -19,6 +19,9 @@ use "${git}/data/capacity.dta", clear
     
     recode hf_level (2=3)(3=2)
     local hf_absent `"xlab(0 "0%" .5 "50%" 1 "100%")"'
+    
+  bys country: gen weight = 1/_N
+
           
   foreach var of varlist ///
     hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
@@ -26,7 +29,7 @@ use "${git}/data/capacity.dta", clear
     local label : var label `var'
   
     winsor `var' , gen(`var'2) p(0.01)
-    vioplot `var'2 , over(hf_type) nofill hor ylab(,angle(0)) nodraw ///
+    vioplot `var'2 [pweight=weight], over(hf_type) nofill hor ylab(,angle(0)) nodraw ///
       title("`label'", pos(11) span) scale(0.7) ///
       den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
       line(lw(none)) med(m(|) mc(white) msize(large)) ``var''
