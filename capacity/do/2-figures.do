@@ -48,22 +48,19 @@ use "${git}/data/capacity.dta", clear
       
       replace hf_inpatient = hf_inpatient/90
       replace hf_outpatient = hf_outpatient/90
-      
-      replace hf_inpatient = 1 if hf_inpatient < 1
-      replace hf_outpatient = 1 if hf_outpatient < 1
-      
-      replace hf_outpatient = 100 if hf_outpatient > 100
-      replace hf_inpatient = 1000 if hf_inpatient > 1000 & !missing(hf_inpatient)
-      
-      replace hf_staff_op = 10 if hf_staff_op > 10
+           
+      replace hf_outpatient = hf_outpatient/hf_staff_op
+        replace hf_outpatient = 100 if hf_outpatient > 100
+        replace hf_outpatient = 0.1 if hf_outpatient < 0.1
+        replace hf_staff_op = 10 if hf_staff_op > 10
       
   tw ///
     (scatter  hf_staff_op hf_outpatient if hf_rural == 0, jitter(2) m(.) mc(red%40) mlw(none)) ///
     (scatter  hf_staff_op hf_outpatient if hf_rural == 1, jitter(2) m(Oh) mc(black%40) mlw(none)) ///
   , by(country  , r(2) note(" ") iyaxes ixaxes legend(pos(12))) ///
-    xtit("Total Outpatients per Day") ytit("Number of Outpatient Staff") ///
+    xtit("Total Outpatients per Provider Workday") ytit("Number of Outpatient Staff") ///
     ylab(0.5 " " 1(1)9 10 "10+" , tlength(0) labgap(2)) yscale( noline) ///
-    xscale(log) xlab(1 "0-1" 10 100  "100+") xoverhang ///
+    xscale(log) xlab(0.1 "0" 1 10 100  "100+") xoverhang ///
     legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox)
      
     graph export "${git}/output/f-caseload.png" , width(3000) replace

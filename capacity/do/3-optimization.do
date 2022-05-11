@@ -286,8 +286,11 @@ tempfile all
    replace region = "Western Pacific" if WHO_Region2 == "WPRO"
    drop if WHO_Region2 == "EURO"
    
+   replace Outcome_definition = strtrim(Outcome_definition)
+   lab var Outcome_definition "Outcome"
+   replace Outcome_definition = "Provider Reallocation: General Correct Management" if Outcome_definition == ""
   
-   meta forest _id _esci _plot if effect_size < 50 ///
+   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & (region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
@@ -297,7 +300,7 @@ tempfile all
    
      graph export "${git}/output/f-lit-1.png" , replace
    
-   meta forest _id _esci _plot if effect_size < 50 ///
+   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & !(region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
