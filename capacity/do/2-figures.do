@@ -129,7 +129,7 @@ use "${git}/data/capacity.dta", clear
     (fpfit check theta_mle [pweight=weight], lc(black) lw(thick)) ///
     (fpfit check theta_old [pweight=weight], lp(dash) lw(thick) lc(black)) ///
     (pci 0 `new' 25 `new' , yaxis(2) lc(black) lw(thick)) ///
-    (pci 0 `old' 25 `old' , yaxis(2) lc(red) lw(thick) lp(dash)) /// 
+    (pci 0 `old' 25 `old' , yaxis(2) lc(black) lw(thick) lp(dash)) /// 
   ,  yscale(alt) yscale(alt  axis(2)) ytitle("Percentage of Providers (Histogram)" , axis(2)) ///
     ytitle("Average Patients per Day") xtit("Vignettes Knowledge Score (Vertical Lines = Means)") ///
     legend(on pos(12) order(3 "Original Assignment" 2 "Optimized by Country/Sector") size(small) region(lp(blank))) ///
