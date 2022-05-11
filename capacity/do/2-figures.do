@@ -29,7 +29,7 @@ use "${git}/data/capacity.dta", clear
     local label : var label `var'
   
     winsor `var' , gen(`var'2) p(0.01)
-    vioplot `var'2 [pweight=weight], over(hf_type) nofill hor ylab(,angle(0)) nodraw ///
+    vioplot `var'2 [pweight=weight], over(hf_type)  hor ylab(,angle(0)) nodraw ///
       title("`label'", pos(11) span) scale(0.7) ///
       den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
       line(lw(none)) med(m(|) mc(white) msize(large)) ``var''
