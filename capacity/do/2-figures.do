@@ -61,7 +61,8 @@ use "${git}/data/capacity.dta", clear
     xtit("Total Outpatients per Provider Workday") ytit("Number of Outpatient Staff") ///
     ylab(0.5 " " 1(1)9 10 "10+" , tlength(0) labgap(2)) yscale( noline) ///
     xscale(log) xlab(0.1 "0" 1 10 100  "100+") xoverhang ///
-    legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox)
+    legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox) ///
+    xline(1 10 , lc(gs14))
      
     graph export "${git}/output/f-caseload.png" , width(3000) replace
 
