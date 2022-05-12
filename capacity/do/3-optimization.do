@@ -196,7 +196,7 @@ use "${git}/data/capacity-optimized.dta", clear
     replace check = 5.5 if check == 4 
 
   tw ///
-    (rarea fake1 fake0 check if check > 5 , lc(black) fc(red) ) ///
+    (rarea fake1 fake0 check if check > 5 , lc(black) fc(white) ) ///
     (mband cap_old band0 , lc(black) lw(vthick) lp(dash)) ///
     (scatter cap_old band0 , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
@@ -208,8 +208,10 @@ use "${git}/data/capacity-optimized.dta", clear
     graph export "${git}/output/f-optimization-1.png" , width(3000) replace
     
     qui su cap_old , d
+
     
   tw ///
+    (rarea fake1 fake0 check if check > 5 , lc(black) fc(white) ) ///
     (mband cap_hftype band , lc(black) lw(vthick) ) ///
     (scatter cap_hftype band , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
   , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
