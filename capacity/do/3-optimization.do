@@ -183,20 +183,14 @@ use "${git}/data/capacity-optimized.dta", clear
     replace cap_old = 1 if cap_old < 1
     replace cap_old = 100 if cap_old > 100
     
-    qui su cap_old , d
-    gen fake1 = `r(p50)'
-    gen fake0 = 1
-    
-    gen check = irt_old
-    replace check = 0 if check < 0 
-    sort check
+  // Graphs    
   
-  // Graphs  
+    qui su cap_old , d
+    
     tw ///
-      (rarea fake1 fake0 check if check > 0 , lc(black) fc(white) ) ///
       (lpoly cap_old irt_old , lc(red) lw(thick) ) ///
       (scatter cap_old irt_old , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-      if irt_old > -2 & irt_old < 2 & check < 2 ///
+      if irt_old > -2 & irt_old < 2 ///
     , by(country , norescale c(1) legend(off) note(" ") title("Actual") )  ///
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
@@ -204,14 +198,13 @@ use "${git}/data/capacity-optimized.dta", clear
       yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
       
       graph save "${git}/output/f-optimization-1.gph" , replace
+    
+    qui su cap_old , d
       
-      qui su cap_old , d
-
     tw ///
-      (rarea fake1 fake0 check if check > 0 , lc(black) fc(white) ) ///
       (lpoly cap_hftype irt_hftype , lc(red) lw(thick) ) ///
       (scatter cap_hftype irt_hftype , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-      if irt_hftype > -2 & irt_hftype < 2 & check < 2 ///
+      if irt_hftype > -2 & irt_hftype < 2 ///
     , by(country , norescale c(1) legend(off) note(" ") title("Optimal") )  ///
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
