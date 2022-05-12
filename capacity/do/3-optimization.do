@@ -209,7 +209,8 @@ use "${git}/data/capacity-optimized.dta", clear
     
     qui su cap_old , d
 
-    
+        sort band0
+
   tw ///
     (rarea fake1 fake0 check if check > 5 , lc(black) fc(white) ) ///
     (mband cap_hftype band , lc(black) lw(vthick) ) ///
