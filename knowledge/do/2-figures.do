@@ -1,5 +1,97 @@
 // Figures for knowledge paper
 
+// Figure. Weight
+use "${git}/data/knowledge.dta", clear
+
+  keep *history*
+
+  qui foreach var of varlist *history* {
+    qui count if !missing(`var')
+    if r(N) < 10000 {
+      drop `var' 
+    }
+    else {
+      drop if missing(`var')
+    }
+  }
+  
+  order * , seq
+  qui pca *history*
+    screeplot , mc(black) lc(black) xtit(" ") ytit(" " , size(zero)) xlab(none) xscale(r(0)) ///
+    title("Panel A: PCA Component Eigenvalues", placement(left) justification(left) span) ///
+    addplot(scatteri 7.6823 1 "{&larr} First principal component" , m(none) mlabc(black))
+      graph save "${git}/temp/validation-1.gph", replace
+      
+    estat loadings
+      mat a = r(A)
+      
+    collapse * , fast
+      xpose, clear
+      gen s = _n
+      tempfile mean
+      save `mean'
+    
+    clear
+    svmat a
+      gen s = _n
+      merge 1:1 s using `mean'
+      
+      egen x = sum(a1)
+      replace a1 = a1/x
+      
+      scatter a1 v1 , mc(black) yscale(r(0)) ylab(#6) ///
+        xtit("Share of providers asking each history question {&rarr}", placement(left) justification(left)) ///
+        xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%" 1 "100%") ///
+        xoverhang ///
+        ytit(" " , size(zero)) /// 
+        ylab(0 "0%" 0.005 "0.5%" .01 "1.0%" .015 "1.5%" .02 "2.0%" 0.025 "2.5%" ) ///
+        title("Panel B: Index weights for history question components", placement(left) justification(left) span)
+        
+        graph save "${git}/temp/validation-2.gph", replace
+        
+        graph combine ///
+          "${git}/temp/validation-1.gph" ///
+          "${git}/temp/validation-2.gph" ///
+          , c(1) ysize(5)
+          
+          graph export "${git}/outputs/f-validation-pca.png", replace
+
+// Figure. Internal consistency
+use "${git}/data/knowledge.dta", clear
+
+  egen check = rowmean(*history*)
+  lab var check 
+
+  local graphs ""
+  local x = 1
+  foreach var of varlist ///
+    diarrhea_history_duration diarrhea_history_othersick ///
+    pneumonia_history_coughdur diabetes_history_numblimb tb_history_sputum ///
+    tb_history_night_sweats pph_history_pph malaria_history_fevertype ///
+    check {
+      
+      if "`var'" == "check" local style "lc(black) lw(vthick)"
+      local graphs "`graphs' (lpoly `var' theta_mle , `style' yaxis(2))"
+      
+      local ++x
+      local label : var label `var'
+      local t = upper(substr("`var'",1,strpos("`var'","_")-1))
+      local label = subinstr("`label'","History","`t'",.)
+      if "`var'" != "check" local legend `"`legend' `x' "`label'"  "'
+    }
+    
+
+    histogram theta_mle,  ///
+      start(-5) w(.5) fc(gs12) lc(none) ///
+      barwidth(.4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%") ///
+      ylab(0 "0%" .25 "25%" .5 "50%" .75 "75%" 1 "100%" , axis(2)) ///
+      xlab(-5(1)5) yscale(alt) yscale(alt axis(2)) ///
+      ytit(" ") xtitle("Vignettes competence score {&rarr}", placement(left) justification(left)) ///
+    addplot( `graphs' ) ///
+      legend(on order(1 "Score distribution (Right Scale)" 10 "All history questions for vignettes" `legend') c(2) size(vsmall) symxsize(small) span)
+
+      graph export "${git}/outputs/f-validation.png", replace 
+
 // Figure. Treatment accuracy by knowledge
 use "${git}/data/knowledge.dta", clear
 
@@ -10,7 +102,7 @@ use "${git}/data/knowledge.dta", clear
       alcolor(black) alwidth(thin) alpat(dash))           ///
   , graphregion(color(white))                                               ///
     title("A. Conditions Diagnosed Correctly", size(medium) justification(left) color(black) span pos(11))         ///
-    xtitle("Vignettes knowledge score {&rarr}", placement(left) justification(left)) xscale(titlegap(2))           ///
+    xtitle("Vignettes competence score {&rarr}", placement(left) justification(left)) xscale(titlegap(2))           ///
     ylab(0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%", angle(0) nogrid) yscale(noli) bgcolor(white) ytitle("")   ///
     xlabel(-5 (1) 5) xscale(noli) note("")     legend(off)
     
@@ -23,7 +115,7 @@ use "${git}/data/knowledge.dta", clear
       alcolor(black) alwidth(thin) alpat(dash))             ///
   , graphregion(color(white))                                             ///
     title("B. Conditions Treated Correctly", size(medium) justification(left) color(black) span pos(11))         ///
-    xtitle("Vignettes knowledge score {&rarr}", placement(left) justification(left)) xscale(titlegap(2))         ///
+    xtitle("Vignettes competence score {&rarr}", placement(left) justification(left)) xscale(titlegap(2))         ///
     ylab(0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%", angle(0) nogrid) yscale(noli) bgcolor(white) ytitle("")   ///
     xlabel(-5 (1) 5) xscale(noli) note("")     legend(off)
   
@@ -45,9 +137,9 @@ use "${git}/data/knowledge.dta", clear
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
     yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
-    yscale(noline) xscale(noline) xlab(-5(1)5 0 "Av.", labsize(small) notick) ///
-    den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-    line(lw(none)) med(m(|) mc(red) msize(large))
+    yscale(noline) xscale(noline) xlab(-5(1)5 0 , labsize(small) notick) ///
+    den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+    line(lw(none)) med(m(|) mc(white) msize(large))
     
   graph export "${git}/outputs/f-quantile.png", replace width(2000)
   
@@ -72,11 +164,17 @@ use "${git}/data/knowledge.dta", clear
     , over(provider_cadre1) xline(-5(1)5,lc(black) lw(thin))  hor ///
       yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
       yscale(noline) xscale(off) xlab(-5(1)5 0 "Av.", labsize(small)) ///
-      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+      line(lw(none)) med(m(|) mc(white) msize(large)) ///
       title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
   }
-  
+
+  gen x = 0
+  scatter x x in 1 , m(i) xlab(-5(1)5 , notick) ///
+    xscale(noline alt) yscale(noline) ytit(" ") xtit(" ") nodraw ///
+    saving("${git}/temp/blank.gph" , replace) ///
+    ylab(1 "Doctor" , labc(white%0) labsize(small) notick) 
+      
   graph combine ///
     "${git}/temp/Full Sample.gph" "${git}/temp/Malawi.gph" ///
     "${git}/temp/Kenya.gph" "${git}/temp/Tanzania.gph" ///
@@ -84,7 +182,8 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/Madagascar.gph" "${git}/temp/Uganda.gph" ///
     "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
     "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
-  , xcom c(1) ysize(5) imargin(zero)
+    "${git}/temp/blank.gph"  ///
+  , xcom c(1) ysize(7) imargin(zero)
     
   graph export "${git}/outputs/f-cadre.png", replace width(2000) 
 
@@ -110,10 +209,16 @@ use "${git}/data/knowledge.dta", clear
     , over(provider_mededuc1)  xline(-5(1)5,lc(black) lw(thin))  hor ///
       xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
       yscale(noline) xscale(off)  xlab(-5(1)5 0 "Av.", labsize(small)) ///
-      den(lw(none) fc(gray)) bar(fc(black) lw(none)) ///
-      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
+      line(lw(none)) med(m(|) mc(white) msize(large)) ///
       title("`x' [`pct'%]" , span pos(11)) nodraw saving("${git}/temp/`x'.gph" , replace) 
   }
+  
+  gen x = 0
+  scatter x x in 1 , m(i) xlab(-5(1)5 , notick) ///
+    xscale(noline alt) yscale(noline) ytit(" ") xtit(" ") nodraw ///
+    saving("${git}/temp/blank.gph" , replace) ///
+    ylab(1 "Certificate" , labc(white%0) labsize(small) notick) 
   
   graph combine ///
     "${git}/temp/Full Sample.gph" "${git}/temp/Malawi.gph" ///
@@ -122,7 +227,8 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/Madagascar.gph"  ///
     "${git}/temp/Mozambique.gph" "${git}/temp/Sierra Leone.gph" ///
     "${git}/temp/Nigeria.gph" "${git}/temp/Niger.gph" ///
-  , xcom c(1) ysize(5) imargin(zero)
+    "${git}/temp/blank.gph"  ///
+  , xcom c(1) ysize(7) imargin(zero)
       
     graph export "${git}/outputs/f-education.png", replace width(2000)   
   
@@ -147,7 +253,7 @@ histogram provider_age1, by(country , ixaxes note(" ") ///
   addplot((fpfit theta_mle provider_age1 [pweight=weight], lc(red) lw(thick) yaxis(2)) ///
     (fpfit upq provider_age1 [pweight=weight], lc(red) yaxis(2) ) ///
     (fpfit loq provider_age1 [pweight=weight], lc(red) yaxis(2))) ///
-  legend(r(1) region(lw(none)) pos(12) order(1 "Age (Right)"  2 "Knowledge Mean" 3 "25th / 75th Percentiles") size(small))
+  legend(r(1) region(lw(none)) pos(12) order(1 "Age (Right)"  2 "Competence Mean" 3 "25th / 75th Percentiles") size(small))
   
   graph export "${git}/outputs/f-age-knowledge.png", replace width(2000)   
    

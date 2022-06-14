@@ -5,8 +5,8 @@
 // Summary table: Sectoral
 use "${git}/data/capacity.dta", clear  
 
-  gen hf_outpatient_day = hf_outpatient/90
-  gen hf_inpatient_day = hf_inpatient/90
+  gen hf_outpatient_day = hf_outpatient/60
+  gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar irt_old = irt
   
@@ -35,7 +35,7 @@ use "${git}/data/capacity.dta", clear
 // Calculate new capacity per day at each provider based on resorting
 use "${git}/data/capacity.dta", clear
   drop if hf_type == . | hf_outpatient == 0
-  gen cap = hf_outpatient/(90*hf_staff_op)
+  gen cap = hf_outpatient/(60*hf_staff_op)
     drop if cap == .
   
   tempfile irt all
@@ -173,52 +173,53 @@ use "${git}/data/capacity-optimized.dta" , clear
 // Part 2: Vizualizations for sectoral restriction
 **************************************************
 
-// Calculate sectoral shares and current quality
-use "${git}/data/capacity-optimized.dta", clear
-
 // Create optimized allocation images
-
-  // Size histogram
-  tw ///
-    (histogram cap_old , frac yaxis(2) color(gs12) start(0) w(5) gap(10) lsty(none)) ///
-    (lowess irt_hftype cap_hftype , lc(black) lw(thick)) ///
-    (lowess irt_old cap_old , lc(black) lp(dash) lw(thick)) ///
-    if cap_old < 40 & cap_old < 40 ///
-  , by(country , noyrescale xrescale ixaxes r(2) legend(on pos(12)) note(" ") )  ///
-    subtitle(,bc(none)) ///
-    xscale(noline) ///
-    xlab(0 10 20 30 40)  xtit("Outpatients per Day") ///
-    ylab(0 "0%" .20 "20%" .40 "40%" .60 "60%" .80 "80%", angle(0) axis(2)) yscale(noline) yscale(noline alt axis(2)) ///
-    ylab(-4 "-4 SD" -2 "-2 SD" 0 "Mean" 2 "+2 SD") ///
-    ytit("Frequency (Histogram)", axis(2)) ytit("Mean Competence", axis(1)) yscale(alt) ///
-    legend(pos(12) r(1) size(small) order(3 "Actual" 2 "Optimal" 1 "Percentage of Providers (Right Axis)"))
-           
-    graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
+use "${git}/data/capacity-optimized.dta", clear
               
-  // Scatter bands       
-  xtile band = irt_hftype , n(10)
+  // Data setup       
     replace cap_hftype = 1 if cap_hftype < 1
     replace cap_hftype = 100 if cap_hftype > 100
-
-  tw ///
-    (mband cap_hftype band , lc(red) lw(vthick) ) ///
-    (scatter cap_hftype band , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-  , by(country , norescale ixaxes r(2) legend(off) note(" ") )  ///
-    subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
-    ylab(1 "0-1" 3.2 "Median" 10 100 "100+" , tl(0)) ytit("Outpatients per Day") ///
-    xlab(1 5.5 "Median" 10 , tl(0)) xtit("Competence Decile") ///
-    yline(3.2, lc(black)) xline(5.5 , lc(black)) 
     
-    graph export "${git}/output/f-optimization-2.png" , width(3000) replace
+    replace cap_old = 1 if cap_old < 1
+    replace cap_old = 100 if cap_old > 100
+    
+  // Graphs    
+  
+    qui su cap_old , d
+    
+    tw ///
+      (lpoly cap_old irt_old , lc(red) lw(thick) ) ///
+      (scatter cap_old irt_old , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+      if irt_old > -2 & irt_old < 2 ///
+    , by(country , norescale c(1) legend(off) note(" ") title("Actual") )  ///
+      subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
+      ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
+      xlab(, tl(0)) xtit("Knowledge Score") ///
+      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
       
-/* Outlier checks in exact reallocation
-  gen c_o = hf_outpatient_day
-  gen c_n = cap
-  tw ///
-    (rspike c_o c_n irt if c_n > c_o, lc(black) lw(thin) ) ///
-    (rspike c_o c_n irt if c_n <= c_o, lc(red) lw(thin) ) ///
-  , by(country , rescale ixaxes iyaxes c(2)) ysize(6)
-*/
+      graph save "${git}/output/f-optimization-1.gph" , replace
+    
+    qui su cap_old , d
+      
+    tw ///
+      (lpoly cap_hftype irt_hftype , lc(red) lw(thick) ) ///
+      (scatter cap_hftype irt_hftype , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
+      if irt_hftype > -2 & irt_hftype < 2 ///
+    , by(country , norescale c(1) legend(off) note(" ") title("Optimal") )  ///
+      subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
+      ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
+      xlab(, tl(0)) xtit("Knowledge Score") ///
+      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
+      
+      graph save "${git}/output/f-optimization-2.gph" , replace
+        
+    graph combine ///
+      "${git}/output/f-optimization-1.gph" ///
+      "${git}/output/f-optimization-2.gph" ///
+      , r(1) ysize(8) imargin(1 1 -1 -1 )
+     
+      graph export "${git}/output/f-optimization.png" , width(3000) replace
+
 
 // Calculate new quality
 use "${git}/data/capacity-optimized.dta", clear
@@ -303,8 +304,11 @@ tempfile all
    replace region = "Western Pacific" if WHO_Region2 == "WPRO"
    drop if WHO_Region2 == "EURO"
    
+   replace Outcome_definition = strtrim(Outcome_definition)
+   lab var Outcome_definition "Outcome"
+   replace Outcome_definition = "Provider Reallocation: General Correct Management" if Outcome_definition == ""
   
-   meta forest _id _esci _plot if effect_size < 50 ///
+   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & (region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
@@ -314,7 +318,7 @@ tempfile all
    
      graph export "${git}/output/f-lit-1.png" , replace
    
-   meta forest _id _esci _plot if effect_size < 50 ///
+   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & !(region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
