@@ -5,8 +5,8 @@
 // Summary table: Sectoral
 use "${git}/data/capacity.dta", clear  
 
-  gen hf_outpatient_day = hf_outpatient/90
-  gen hf_inpatient_day = hf_inpatient/90
+  gen hf_outpatient_day = hf_outpatient/60
+  gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar irt_old = irt
   
@@ -35,7 +35,7 @@ use "${git}/data/capacity.dta", clear
 // Calculate new capacity per day at each provider based on resorting
 use "${git}/data/capacity.dta", clear
   drop if hf_type == . | hf_outpatient == 0
-  gen cap = hf_outpatient/(90*hf_staff_op)
+  gen cap = hf_outpatient/(60*hf_staff_op)
     drop if cap == .
   
   tempfile irt all

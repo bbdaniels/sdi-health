@@ -8,9 +8,9 @@ use "${git}/data/capacity.dta", clear
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
       , by(country hf_id) vallab(hf_type)
       
-  replace hf_inpatient = hf_inpatient/90
+  replace hf_inpatient = hf_inpatient/60
     lab var hf_inpatient "Daily Inpatients"
-  replace hf_outpatient = hf_outpatient/90
+  replace hf_outpatient = hf_outpatient/60
     lab var hf_outpatient "Daily Outpatients"
     
     lab var irt "Mean Provider Knowledge"
@@ -49,8 +49,8 @@ use "${git}/data/capacity.dta", clear
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_rural ///
       , by(country hf_id) vallab(hf_type)
       
-      replace hf_inpatient = hf_inpatient/90
-      replace hf_outpatient = hf_outpatient/90
+      replace hf_inpatient = hf_inpatient/60
+      replace hf_outpatient = hf_outpatient/60
            
       replace hf_outpatient = hf_outpatient/hf_staff_op
         replace hf_outpatient = 100 if hf_outpatient > 100
@@ -75,8 +75,8 @@ use "${git}/data/capacity.dta", clear
   duplicates drop country hf_id , force
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
   
-  gen hf_outpatient_day = hf_outpatient/90
-  gen hf_inpatient_day = hf_inpatient/90
+  gen hf_outpatient_day = hf_outpatient/60
+  gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar theta_mle = irt
   gen check = hf_outpatient_day/hf_staff_op
@@ -104,8 +104,8 @@ use "${git}/data/capacity.dta", clear
 // Setup: Current comparator for optimization
 use "${git}/data/capacity.dta", clear
 
-  gen hf_outpatient_day = hf_outpatient/90
-  gen hf_inpatient_day = hf_inpatient/90
+  gen hf_outpatient_day = hf_outpatient/60
+  gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar theta_mle = irt
   gen check = hf_outpatient_day/hf_staff_op
