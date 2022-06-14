@@ -1,46 +1,44 @@
 // Figures for paper
 
-// Figure. Descriptive statistics for facilities by sector
+// Figure. Descriptive statistics for facilities 
 
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
+    gen hf_outpatient_day = hf_outpatient/60
   
   labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
       , by(country hf_id) vallab(hf_type)
       
-  replace hf_inpatient = hf_inpatient/60
-    lab var hf_inpatient "Daily Inpatients"
-  replace hf_outpatient = hf_outpatient/60
+  replace hf_outpatient = hf_outpatient/(60)
     lab var hf_outpatient "Daily Outpatients"
+  gen hf_outpatient_staff = hf_outpatient/hf_staff_op
+    lab var hf_outpatient_staff "Daily Outpatients per Staff"
     
     lab var irt "Mean Provider Knowledge"
     
-  replace hf_inpatient = . if hf_level == 1
+    recode hf_level (1=1 "Health Post")(2=3 "Hospital")(3=2 "Clinic") , gen(level)
     
-    recode hf_level (2=3)(3=2)
-    local hf_absent `"xlab(0 "0%" .5 "50%" 1 "100%")"'
-    
-  bys country: gen weight = 1/_N
+  bys country level: gen weight = 1/_N
 
           
   foreach var of varlist ///
-    hf_inpatient hf_outpatient hf_staff hf_absent hf_staff_op irt {
+    hf_outpatient hf_staff_op hf_outpatient_staff irt  {
       
     local label : var label `var'
   
     winsor `var' , gen(`var'2) p(0.01)
-    vioplot `var'2 [pweight=weight], over(hf_type)  hor ylab(,angle(0)) nodraw ///
+    graph box `var'2 [pweight=weight], over(level , axis(noline))  ///
+      hor ylab(,angle(0)) nodraw ///
       title("`label'", pos(11) span) scale(0.7) ///
-      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
-      line(lw(none)) med(m(|) mc(white) msize(large)) ``var''
+      ytit(" ") inten(0) lines(lc(black))
 
       graph save "${git}/temp/`var'.gph" , replace
       local graphs `" `graphs' "${git}/temp/`var'.gph" "'
   }
   
-  graph combine `graphs' , colf  ysize(5)
+  graph combine `graphs' , ysize(5)
   graph export "${git}/output/f-descriptives.png" , width(3000) replace
-  
+      
 // Figure. Facility caseloads and staff, by country
 
 use "${git}/data/capacity.dta", clear
