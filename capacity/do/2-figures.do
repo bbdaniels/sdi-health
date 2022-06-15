@@ -49,14 +49,17 @@ use "${git}/data/capacity.dta", clear
   replace check = 160 if check >= 160 & check != .
   
   cdfplot check  ///
-  , by(country_string) xlog xscale(log) xlab(1 "X=1" 2 5 10 20 40 80 160, labsize(small) notick) ///
-    legend(on c(3) pos(6) size(small) )  ysize(5) scale(0.75) /// xscale(noline ) yscale(noline )
-    ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) yline(0 .25 .5 .75 1 , lc(gs14) lw(thin)) ///
+  , by(country_string) xlog xscale(log) xlab(1 2 5 10 20 40 80 160, labsize(small) notick) ///
+    legend(on c(3) pos(6) size(small) )  ysize(5) scale(0.75) xscale(noline ) yscale(noline ) ///
+    ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) ///
     ytit("Share of providers seeing...") xtit("... at least X patients daily") ///
-      xline(1 2 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
+      xline(2 5 10 40 80 , lc(gs14) lw(thin)) ///
+      yline(.25 .75 , lc(gs14) lw(thin)) ///
+      xline(1 20 160 , lc(black) lw(thin)) ///
+      yline(0 .5 1 , lc(black) lw(thin)) ///
     opt1( yscale(reverse)  ///
       lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red )) ///
-    legend( ring(0) c(1) pos(1) ///
+    legend( region(lc(none)) ring(0) c(1) pos(1) ///
       order(1 "Kenya" 2 "Madagascar" 3 "Malawi" 4 "Mozambique" 5 "Niger" ///
             6 "Nigeria" 7 "Sierra Leone" 8 "Tanzania" 9 "Togo" 10 "Uganda"))
       

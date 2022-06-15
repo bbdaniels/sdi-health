@@ -45,20 +45,70 @@ use "${git}/data/capacity.dta", clear
     drop if cap == .
   
   tempfile irt all
-  keep country irt cap hf_type hf_level hf_rural public ///
+  keep country irt cap hf_type hf_level hf_rural public cadre ///
     hf_staff_op hf_outpatient hf_inpatient treat?
   save `all'
 
 qui {
-  // Capacity adjustment resort    
-  collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
-    merge 1:m country hf_level using `all' , nogen
-    gsort country hf_level -irt
-    gen tot = n/new
-    bys country hf_level : gen cap_bigger = new if _n <= tot
-      replace cap_bigger = 0 if cap_bigger == .
-      gen irt_bigger = irt
-      drop n tot new
+  // Capacity adjustment resorts  
+    collapse (p90) new=cap (rawsum) n=cap , by(country)
+      merge 1:m country using `all' , nogen
+      gsort country -irt
+      gen tot = n/new
+      bys country : gen cap_biggco = new if _n <= tot
+        replace cap_biggco = 0 if cap_biggco == .
+        gen irt_biggco = irt
+        drop n tot new
+        save `all' , replace
+        
+    collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+      merge 1:m country hf_level using `all' , nogen
+      gsort country hf_level -irt
+      gen tot = n/new
+      bys country hf_level : gen cap_biggse = new if _n <= tot
+        replace cap_biggse = 0 if cap_biggse == .
+        gen irt_biggse = irt
+        drop n tot new
+        save `all' , replace
+        
+    collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+      merge 1:m country hf_level using `all' , nogen
+      gsort country hf_level -irt
+      gen tot = n/20
+      bys country hf_level : gen cap_bigg20 = new if _n <= tot
+        replace cap_bigg20 = 0 if cap_bigg20 == .
+        gen irt_bigg20 = irt
+        drop n tot new
+        save `all' , replace
+        
+    collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+      merge 1:m country hf_level using `all' , nogen
+      gsort country hf_level -irt
+      gen tot = n/30
+      bys country hf_level : gen cap_bigg30 = new if _n <= tot
+        replace cap_bigg30 = 0 if cap_bigg30 == .
+        gen irt_bigg30 = irt
+        drop n tot new
+        save `all' , replace
+        
+    collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+      merge 1:m country hf_level using `all' , nogen
+      gsort country hf_level -irt
+      gen tot = n/40
+      bys country hf_level : gen cap_bigg40 = new if _n <= tot
+        replace cap_bigg40 = 0 if cap_bigg40 == .
+        gen irt_bigg40 = irt
+        drop n tot new
+        save `all' , replace
+        
+    collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
+      merge 1:m country hf_level using `all' , nogen
+      gsort country hf_level -irt
+      gen tot = n/50
+      bys country hf_level : gen cap_bigg50 = new if _n <= tot
+        replace cap_bigg50 = 0 if cap_bigg50 == .
+        gen irt_bigg50 = irt
+        drop n tot new
       
   // Restricted to type resort
   preserve
@@ -73,6 +123,20 @@ qui {
     gen cap_hftype = cap
     gen ser_hftype = _n
     merge 1:1 ser_hftype using `irt' , nogen
+    
+  // Restricted to cadre resort
+  preserve
+  gsort country cadre -irt
+    keep country cadre irt
+    ren irt irt_cadres
+    gen ser_cadres = _n
+    save `irt' , replace
+  restore
+  
+  gsort country cadre -cap
+    gen cap_cadres = cap
+    gen ser_cadres = _n
+    merge 1:1 ser_cadres using `irt' , nogen
   
   // Unrestricted resort
   preserve
@@ -149,7 +213,9 @@ use "${git}/data/capacity-optimized.dta" , clear
     save `all' , replace
   restore
   
-  qui foreach type in bigger unrest hftype levels rururb public {
+  qui foreach type in ///
+    unrest hftype levels rururb public cadres ///
+    biggco biggse bigg20 bigg30 bigg40 bigg50 {
     preserve
       collapse irt_`type' [aweight=cap_`type'] , by(country)
         gen irt_old = irt_`type'
@@ -168,9 +234,18 @@ use "${git}/data/capacity-optimized.dta" , clear
     egen mean = rowmean(irt_*)
     gen dif = mean - irt
   
+  sort x country
+    replace x = "Knowledge" if x == "_old"
+    replace x = "Correct" if x == "_xxx"
+  
   export excel country x ///
-    irt mean dif irt_hftype irt_rururb irt_levels irt_public irt_unrest irt_bigger ///
+    irt mean dif irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
     using "${git}/output/t-optimize-quality.xlsx" ///
+  , replace first(var)
+  
+  export excel country x ///
+    irt mean dif irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
+    using "${git}/output/t-optimize-quality-d.xlsx" ///
   , replace first(var)
   
   save "${git}/data/capacity-comparison.dta" , replace
@@ -200,7 +275,7 @@ use "${git}/data/capacity-optimized.dta", clear
     , by(country , norescale c(1) legend(off) note(" ") title("Actual") )  ///
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
-      xlab(, tl(0)) xtit("Knowledge Score") ///
+      xlab(, tl(0)) xtit("Provider Competence") ///
       yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
       
       graph save "${git}/output/f-optimization-1.gph" , replace
@@ -214,7 +289,7 @@ use "${git}/data/capacity-optimized.dta", clear
     , by(country , norescale c(1) legend(off) note(" ") title("Optimal") )  ///
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
-      xlab(, tl(0)) xtit("Knowledge Score") ///
+      xlab(, tl(0)) xtit("Provider Competence") ///
       yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
       
       graph save "${git}/output/f-optimization-2.gph" , replace
@@ -275,11 +350,11 @@ tempfile all
 // Part 3: Resort bootstrap and comparison
 **************************************************
   use "${git}/data/capacity-comparison.dta" , clear
-    keep if x == "_xxx"
+    keep if x == "Correct"
     ren irt irt_old
     
-    egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_bigger)
-    egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_bigger)
+    egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
+    egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
     clonevar effect_size = mean
     
     replace _meta_ciu = _meta_ciu - irt_old
