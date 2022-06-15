@@ -4,68 +4,35 @@
 
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
-    gen hf_outpatient_day = hf_outpatient/60
   
-  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_level ///
-      , by(country hf_id) vallab(hf_type)
+  collapse (mean) hf_outpatient hf_staff_op ///
+      , by(country hf_id) fast
       
   replace hf_outpatient = hf_outpatient/(60)
-    lab var hf_outpatient "Daily Outpatients"
-  gen hf_outpatient_staff = hf_outpatient/hf_staff_op
-    lab var hf_outpatient_staff "Daily Outpatients per Staff"
+  gen hf_outpatient_staff = hf_outpatient/(hf_staff_op)
+       
+  bys country: gen weight = 1/_N
+  replace hf_outpatient = 200 if hf_outpatient >200
+  replace hf_outpatient_staff = 200 if hf_outpatient_staff >200
+      
+  graph box hf_outpatient [pweight=weight] ///
+  , over(country , axis(noline) sort(1)) ///
+    hor ylab(,angle(0)) box(1 , lc(black) lw(thin)) ///
+    marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
+    ytit(" ") inten(0) cwhi lines(lw(thin) lc(black)) note(" ") title("Per Facility")
     
-    lab var irt "Mean Provider Knowledge"
+    graph save "${git}/temp/fac.gph" , replace
     
-    recode hf_level (1=1 "Health Post")(2=3 "Hospital")(3=2 "Clinic") , gen(level)
+  graph box hf_outpatient_staff [pweight=weight] ///
+  , over(country , axis(noline) sort(1)) ///
+    hor ylab(,angle(0)) box(1 , lc(black) lw(thin)) ///
+    marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
+    ytit(" ") inten(0) cwhi lines(lw(thin) lc(black)) note(" ") title("Per Provider")
+      
+    graph save "${git}/temp/pro.gph" , replace
     
-  bys country level: gen weight = 1/_N
-
-          
-  foreach var of varlist ///
-    hf_outpatient hf_staff_op hf_outpatient_staff irt  {
-      
-    local label : var label `var'
-  
-    winsor `var' , gen(`var'2) p(0.01)
-    graph box `var'2 [pweight=weight], over(level , axis(noline))  ///
-      hor ylab(,angle(0)) nodraw ///
-      title("`label'", pos(11) span) scale(0.7) ///
-      ytit(" ") inten(0) lines(lc(black))
-
-      graph save "${git}/temp/`var'.gph" , replace
-      local graphs `" `graphs' "${git}/temp/`var'.gph" "'
-  }
-  
-  graph combine `graphs' , ysize(5)
-  graph export "${git}/output/f-descriptives.png" , width(3000) replace
-      
-// Figure. Facility caseloads and staff, by country
-
-use "${git}/data/capacity.dta", clear
-  drop if hf_outpatient == . | hf_inpatient == . | hf_staff == 0 | hf_staff_op == 0
-  
-  labelcollapse (mean) irt hf_absent hf_outpatient hf_inpatient hf_staff hf_staff_op hf_type hf_rural ///
-      , by(country hf_id) vallab(hf_type)
-      
-      replace hf_inpatient = hf_inpatient/60
-      replace hf_outpatient = hf_outpatient/60
-           
-      replace hf_outpatient = hf_outpatient/hf_staff_op
-        replace hf_outpatient = 100 if hf_outpatient > 100
-        replace hf_outpatient = 0.1 if hf_outpatient < 0.1
-        replace hf_staff_op = 10 if hf_staff_op > 10
-      
-  tw ///
-    (scatter  hf_staff_op hf_outpatient if hf_rural == 0, jitter(2) m(.) mc(red%40) mlw(none)) ///
-    (scatter  hf_staff_op hf_outpatient if hf_rural == 1, jitter(2) m(Oh) mc(black%40) mlw(none)) ///
-  , by(country  , r(2) note(" ") iyaxes ixaxes legend(pos(12))) ///
-    xtit("Total Outpatients per Provider Workday") ytit("Number of Outpatient Staff") ///
-    ylab(0.5 " " 1(1)9 10 "10+" , tlength(0) labgap(2)) yscale( noline) ///
-    xscale(log) xlab(0.1 "0" 1 10 100  "100+") xoverhang ///
-    legend(order(1 "Urban" 2 "Rural") pos(12) symysize(*5) symxsize(*5))  subtitle(, nobox) ///
-    xline(1 10 , lc(gs14))
-     
-    graph export "${git}/output/f-caseload.png" , width(3000) replace
+  graph combine "${git}/temp/fac.gph" "${git}/temp/pro.gph"  , ysize(6) c(1) imargin(none)
+    graph export "${git}/output/f-descriptives.png" , width(3000) replace
 
 // Figure. Daily caseload per provider, by facility sector and size
 use "${git}/data/capacity.dta", clear
