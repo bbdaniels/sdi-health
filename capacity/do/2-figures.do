@@ -34,37 +34,33 @@ use "${git}/data/capacity.dta", clear
   graph combine "${git}/temp/fac.gph" "${git}/temp/pro.gph"  , ysize(6) c(1) imargin(none)
     graph export "${git}/output/f-descriptives.png" , width(3000) replace
 
-// Figure. Daily caseload per provider, by facility sector and size
+// Cumulative Capacity
 use "${git}/data/capacity.dta", clear
 
-  duplicates drop country hf_id , force
-  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
-  
   gen hf_outpatient_day = hf_outpatient/60
   gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar theta_mle = irt
   gen check = hf_outpatient_day/hf_staff_op
+    
+  keep check country_string
   
   replace check = 1 if check < 1
-  replace check = 160 if check > 160
+  replace check = 160 if check >= 160 & check != .
   
-  levelsof country_string , local(l)
-  local x = 0
-    foreach level in `l' {
-      local ++x
-      local legend `"`legend' `x' "`level'" "'
-    }
-  
-  cdfplot check if check > 0 ///
-  , by(country_string) xlog xscale(log) xlab(1 2.5 5 10 20 40 80 160, labgap(2) labsize(small) notick) ///
-    legend(on c(1) pos(3) size(small) symxsize(small) order(`legend') region(lp(blank))) xscale(noline ) yscale(noline ) ///
+  cdfplot check  ///
+  , by(country_string) xlog xscale(log) xlab(1 "X=1" 2 5 10 20 40 80 160, labsize(small) notick) ///
+    legend(on c(3) pos(6) size(small) )  ysize(5) scale(0.75) /// xscale(noline ) yscale(noline )
     ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) yline(0 .25 .5 .75 1 , lc(gs14) lw(thin)) ///
-    ytit("Share of providers who see at least...") xtit("... X patients per day {&rarr}" , placement(w)) xline(1 2.5 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
+    ytit("Share of providers seeing...") xtit("... at least X patients daily") ///
+      xline(1 2 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
     opt1( yscale(reverse)  ///
-      lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red ))
-
-    graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
+      lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red )) ///
+    legend( ring(0) c(1) pos(1) ///
+      order(1 "Kenya" 2 "Madagascar" 3 "Malawi" 4 "Mozambique" 5 "Niger" ///
+            6 "Nigeria" 7 "Sierra Leone" 8 "Tanzania" 9 "Togo" 10 "Uganda"))
+      
+      graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
     
 // Setup: Current comparator for optimization
 use "${git}/data/capacity.dta", clear

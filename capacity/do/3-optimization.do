@@ -2,34 +2,40 @@
 // Part 1: Capacity optimization methods
 **************************************************
 
-// Summary table: Sectoral
+// Summary table: Sectoral shares and statistics
 use "${git}/data/capacity.dta", clear  
 
   gen hf_outpatient_day = hf_outpatient/60
-  gen hf_inpatient_day = hf_inpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar irt_old = irt
   
-  collapse (mean) hf_outpatient_day hf_inpatient_day hf_staff_op irt_old ///
-    (rawsum) cap_old , by(country hf_type)
+  collapse (mean) hf_outpatient_day hf_staff_op irt_old ///
+    (rawsum) cap_old , by(country hf_level)
     
-    drop if hf_type == . | cap_old == 0
+    expand 2 , gen(check)
+      replace country = 0 if check == 1
+  
+  collapse (mean) hf_outpatient_day hf_staff_op irt_old ///
+    (rawsum) cap_old , by(country hf_level)
+    
+    drop if hf_level == . | cap_old == 0
+    recode hf_level (1=1 "Health Post")(2=3 "Hospital")(3=2 "Clinic") , gen(level)
+    sort country level
 
   gen c2 = hf_outpatient_day/hf_staff_op
   egen temp = sum(cap_old) , by(country)
   gen n = cap_old/temp
  
-  lab var n "Share"
-  lab var irt_old "Knowledge"
-  lab var hf_outpatient_day "Mean Daily Outpatients" 
-  lab var hf_inpatient_day "Mean Daily Inpatients" 
-  lab var hf_staff_op "Mean Outpatient Staff" 
-  lab var c2 "Mean Outpatients per Staff" 
+  lab var n "Outpatient Share"
+  lab var irt_old "Mean Competence"
+  lab var hf_outpatient_day "Daily Outpatients per Facility" 
+  lab var hf_staff_op "Outpatient Staff" 
+  lab var c2 "Outpatients per Staff Day" 
+  lab var level "Level"
  
   export excel ///
-    country hf_type n irt hf_outpatient_day  ///
-    hf_inpatient_day hf_staff_op c2  ///
-  using "${git}/output/t-optimize-capacity.xlsx" ///
+    country level hf_outpatient_day hf_staff_op c2 n irt  ///
+  using "${git}/output/t-summary-capacity.xlsx" ///
   , replace first(varl)
 
 // Calculate new capacity per day at each provider based on resorting
