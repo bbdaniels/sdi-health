@@ -75,5 +75,40 @@
     legend(on order(`legend') pos(3) c(1))
     
       graph export "${git}/output/af-leverage.png" , width(3000) replace
+      
+// Robustness 2: Inpatients
+
+
+use "${git}/data/capacity.dta", clear  
+
+  gen hf_outpatient_day = hf_outpatient/60
+  clonevar cap_old = hf_outpatient_day
+  clonevar irt_old = irt
+  tempfile irt 
+  
+  preserve
+  gsort country -irt
+    keep country irt cap
+    ren irt irt_unrest
+    gen ser_unrest = _n
+    save `irt' , replace
+  restore
+  
+  gsort country -cap
+    gen cap_unrest = cap
+    gen ser_unrest = _n
+    merge 1:1 ser_unrest using `irt' , nogen
+    
+    winsor hf_inpatient_beds , p(0.01) gen(inp)
+      gen inp_day = inp/60
+      
+  preserve
+    collapse irt_old [pweight = inp_day], by(country)
+    save `irt' , replace
+  restore
+    collapse irt_unrest [pweight = inp_day], by(country)
+    merge 1:1 country using `irt' , nogen
+    
+    export excel using "${git}/output/af-inpatients.xlsx" , replace 
 
 // Now we know
