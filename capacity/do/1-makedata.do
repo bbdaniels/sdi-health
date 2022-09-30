@@ -238,6 +238,9 @@
   // Magic
   iecodebook apply using "${box}/provider-codebook.xlsx" , drop
   
+  // Recode occupation by education
+  replace cadre = 1 if cadre == 4 & inlist(provider_mededuc1,3,4)
+  
   *Order the variables 
   isid country year hf_id prov_id, sort
   egen uid = group(country year hf_id prov_id)
