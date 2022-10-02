@@ -52,7 +52,7 @@ use "${git}/data/capacity.dta", clear
   , by(country_string) xlog xscale(log) xlab(1 2 5 10 20 40 80 160, labsize(small) notick) ///
     legend(on c(3) pos(6) size(small) )  ysize(5) scale(0.75) xscale(noline ) yscale(noline ) ///
     ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) ///
-    ytit("Share of providers seeing...") xtit("... at least X patients daily") ///
+    ytit("Share of providers seeing...") xtit("... more than X patients daily") ///
       xline(2 5 10 40 80 , lc(gs14) lw(thin)) ///
       yline(.25 .75 , lc(gs14) lw(thin)) ///
       xline(1 20 160 , lc(black) lw(thin)) ///
