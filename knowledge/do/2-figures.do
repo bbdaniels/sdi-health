@@ -88,8 +88,8 @@ use "${git}/data/knowledge.dta", clear
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
     yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
     yscale(noline) xscale(noline) xlab(-5(1)5 0 , labsize(small) notick) ///
-    den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
-    line(lw(none)) med(m(|) mc(white) msize(large)) ///
+    den(lw(none) fc(gs14) fi(70)) bar(fc(red) lw(none)) ///
+    line(lw(none)) med(m(|) mc(red) msize(large)) ///
     note("Provider competence score {&rarr}")
 
   graph export "${git}/outputs/f-quantile.png", replace width(2000)
@@ -111,33 +111,32 @@ use "${git}/data/knowledge.dta", clear
       local a = r(table)[1,1]
       local pct = substr("`a'0",2,2)
 
-    vioplot theta_mle if country == "`x'" [pweight=weight] ///
-    , over(provider_cadre1) xline(-5(1)5,lc(black) lw(thin))  hor ///
+    vioplot theta_mle if country == "`x'" & theta_mle > -3 & theta_mle < 3 [pweight=weight] ///
+    , over(provider_cadre1) xline(-3(1)3,lc(black) lw(thin))  hor ///
       yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
-      yscale(noline) xscale(off) xlab(-5(1)5 0 "Av.", labsize(small)) ///
-      den(lw(none) fc(black) fi(70)) bar(fc(white) lw(none)) ///
-      line(lw(none)) med(m(|) mc(white) msize(large)) ///
-      title("{bf:`x'} | {it:Doctors with higher competence than median Kenyan nurse: [`pct'%]}"  ///
-        , size(medsmall) span pos(11) ring(1)) ///
+      yscale(noline) xscale(noline) xlab(-3(1)3 0 , labsize(small)) ///
+      den(lw(none) fc(gs14) fi(70)) bar(fc(red) lw(none)) ///
+      line(lw(none)) med(m(|) mc(red) msize(large)) ///
+      title("{bf:`x'} - {it:Doctors above median Kenyan nurse: [`pct'%]}"  ///
+        , size(medsmall) span pos(11) ring(1)) note("Provider competence score {&rarr}") ///
       nodraw saving("${git}/temp/`x'.gph" , replace)
   }
 
   gen x = 0
-  scatter x x in 1 , m(i) xlab(-5(1)5 , notick) ///
+  scatter x x in 1 , m(i) xlab(-3(1)3 , notick) ///
     xscale(noline) yscale(noline) ytit(" ") xtit(" ") nodraw ///
     saving("${git}/temp/blank.gph" , replace) ///
     ylab(1 "Doctor" , labc(white%0) labsize(small) notick) ///
     note("Provider competence score {&rarr}" , ring(0))
 
   graph combine ///
-    "${git}/temp/blank.gph"  ///
     "${git}/temp/Full Sample.gph" "${git}/temp/Guinea Bissau.gph" ///
     "${git}/temp/Kenya.gph" "${git}/temp/Madagascar.gph" ///
     "${git}/temp/Malawi.gph" "${git}/temp/Mozambique.gph"  ///
     "${git}/temp/Niger.gph" "${git}/temp/Nigeria.gph" ///
     "${git}/temp/Sierra Leone.gph" "${git}/temp/Tanzania.gph" ///
     "${git}/temp/Togo.gph" "${git}/temp/Uganda.gph" ///
-  , xcom c(1) ysize(7) imargin(zero)
+  , xcom c(2) ysize(5) imargin(zero) colfirst
 
   graph export "${git}/outputs/f-cadre.png", replace width(2000)
 
@@ -167,14 +166,15 @@ replace provider_age1 = . if provider_age1>80 | provider_age1<=19
 
       keep if country != ""
       keep if country != "Uganda" & country != " Full Sample"
-      encode country, gen(c)
+      egen c = rank(a1)
 
       tw ///
         (rcap a5 a6 c , lc(gray)) ///
-        (scatter a1 c , mc(black) mlab(country) mlabc(black) mlabpos(9) mlabsize(vsmall)) ///
-      , xoverhang yscale(noline reverse) yline(-0.03(0.01)0.03 , lc(gs14)) ///
+        (scatter a1 c , mc(black) mlab(country) mlabc(black) mlabpos(3) mlabangle(20) mlabsize(vsmall)) ///
+      , xoverhang xscale(reverse) yscale(noline reverse) yline(-0.03(0.01)0.03 , lc(gs14)) ///
         yline(0 , lc(red)) xscale(off) nodraw fysize(20) ///
-        title("Improvement per Decade" , span pos(11)) saving("${git}/temp/regress.gph" , replace) ///
+        title("Improvement per decade (controlled for covariates)" ///
+          , span pos(11)) saving("${git}/temp/regress.gph" , replace) ///
         ylab(0 "Zero" -0.03 "+0.3 SD" -0.02 "+0.2 SD" -0.01 "+0.1 SD" ///
                        0.03 "-0.3 SD"  0.02 "-0.2 SD"  0.01 "-0.1 SD" , notick)
 
@@ -201,7 +201,8 @@ histogram provider_age1, by(country , ixaxes note(" ") ///
     order(2 "Competence Mean" 3 "IQR (25th - 75th)" 1 "Age Bins (%, Right Scale)") ) ///
   nodraw saving("${git}/temp/lpfit.gph" , replace)
 
-  graph combine "${git}/temp/lpfit.gph" "${git}/temp/regress.gph" , c(1) imargin(zero)
+  graph combine "${git}/temp/lpfit.gph" "${git}/temp/regress.gph" ///
+    , c(1) imargin(zero) ysize(5)
 
   graph export "${git}/outputs/f-age-knowledge.png", replace width(2000)
 
