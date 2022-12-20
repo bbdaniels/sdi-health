@@ -7,6 +7,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 
 cap ssc install iefieldkit
 cap ssc install vioplot
+cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/binsreg/master/stata/")
 
 // Raw data flag
 
