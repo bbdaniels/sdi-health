@@ -146,6 +146,40 @@ use "${git}/data/knowledge.dta", clear
 
 replace provider_age1 = . if provider_age1>80 | provider_age1<=19
 
+  encode country , gen(c)
+
+  reg theta_mle c.provider_age1#i.c ///
+    advanced diploma i.facility_level_rec ///
+    i.rural_rec i.public_rec [pweight=weight]
+
+    mat a = r(table)'
+    levelsof country , local(cs)
+
+    preserve
+      clear
+      svmat a
+      gen country = ""
+      local x = 0
+      foreach c in `cs' {
+        local ++x
+        replace country = "`c'" in `x'
+      }
+
+      keep if country != ""
+      keep if country != "Uganda" & country != " Full Sample"
+      encode country, gen(c)
+
+      tw ///
+        (rcap a5 a6 c , lc(gray)) ///
+        (scatter a1 c , mc(black) mlab(country) mlabc(black) mlabpos(9) mlabsize(vsmall)) ///
+      , xoverhang yscale(noline reverse) yline(-0.03(0.01)0.03 , lc(gs14)) ///
+        yline(0 , lc(red)) xscale(off) nodraw fysize(20) ///
+        title("Improvement per Decade" , span pos(11)) saving("${git}/temp/regress.gph" , replace) ///
+        ylab(0 "Zero" -0.03 "+0.3 SD" -0.02 "+0.2 SD" -0.01 "+0.1 SD" ///
+                       0.03 "-0.3 SD"  0.02 "-0.2 SD"  0.01 "-0.1 SD" , notick)
+
+    restore
+
 expand 2 , gen(total)
   replace country = " Full Sample" if total == 1
 
@@ -156,14 +190,18 @@ egen upq = pctile(theta_mle), p(75) by(country provider_age1)
 histogram provider_age1, by(country , ixaxes note(" ") ///
     legend(r(1) pos(12) order(1 "Age" 2 "Correct Management Mean" 3 "25th and 75th Percentiles") size(small))) ///
   start(15) w(5) fc(gs14) lc(none)  ///
-  barwidth(4) percent ylab(0 "0%" 10 "10%" 20 "20%" 30 "30%") yscale(alt) yscale(alt axis(2)) ///
+  barwidth(4) percent ylab(0 "{&uarr} Age (%)" 10 "10%" 20 "20%" 30 "30%") yscale(alt) yscale(alt axis(2)) ///
   xlab(10 "Age {&rarr}" 20(10)70  , labsize(vsmall)) ///
+  ylab(-3 "Competence {&uarr}" -2(1)2 , axis(2)) ///
   ytit(" ") xtit(" ") subtitle(,nobox) ///
   addplot((fpfit theta_mle provider_age1 [pweight=weight], lc(red) lw(thick) yaxis(2)) ///
     (fpfit upq provider_age1 [pweight=weight], lc(black) lp(dash) yaxis(2) ) ///
     (fpfit loq provider_age1 [pweight=weight], lc(black) lp(dash) yaxis(2))) ///
   legend(r(1) region(lw(none)) size(small) pos(12) ///
-    order(2 "Competence Mean" 3 "IQR (25th - 75th)" 1 "Age Bins (%, Right Scale)") )
+    order(2 "Competence Mean" 3 "IQR (25th - 75th)" 1 "Age Bins (%, Right Scale)") ) ///
+  nodraw saving("${git}/temp/lpfit.gph" , replace)
+
+  graph combine "${git}/temp/lpfit.gph" "${git}/temp/regress.gph" , c(1) imargin(zero)
 
   graph export "${git}/outputs/f-age-knowledge.png", replace width(2000)
 
