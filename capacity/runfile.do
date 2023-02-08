@@ -7,6 +7,7 @@ copy ///
   "${git}/data/comparison.dta", replace
 
 qui do "${git}/do/labelcollapse.ado"
+ssc install cdfplot
 
 qui do "${git}/do/1-makedata.do"
 qui do "${git}/do/2-figures.do"

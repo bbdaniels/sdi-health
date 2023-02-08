@@ -44,10 +44,14 @@ use "${git}/data/capacity.dta", clear
   gen cap = hf_outpatient/(60*hf_staff_op)
     drop if cap == .
   
+  egen vig = rowmean(treat?)
+  
   tempfile irt all
   keep country irt cap hf_type hf_level hf_rural public cadre ///
-    hf_staff_op hf_outpatient hf_inpatient treat?
+    hf_staff_op hf_outpatient hf_inpatient treat? vig
   save `all'
+  
+
 
 qui {
   // Capacity adjustment resorts  
@@ -58,6 +62,7 @@ qui {
       bys country : gen cap_biggco = new if _n <= tot
         replace cap_biggco = 0 if cap_biggco == .
         gen irt_biggco = irt
+        gen vig_biggco = vig
         drop n tot new
         save `all' , replace
         
@@ -68,6 +73,7 @@ qui {
       bys country hf_level : gen cap_biggse = new if _n <= tot
         replace cap_biggse = 0 if cap_biggse == .
         gen irt_biggse = irt
+        gen vig_biggse = vig
         drop n tot new
         save `all' , replace
         
@@ -78,6 +84,7 @@ qui {
       bys country hf_level : gen cap_bigg20 = new if _n <= tot
         replace cap_bigg20 = 0 if cap_bigg20 == .
         gen irt_bigg20 = irt
+        gen vig_bigg20 = vig
         drop n tot new
         save `all' , replace
         
@@ -88,6 +95,7 @@ qui {
       bys country hf_level : gen cap_bigg30 = new if _n <= tot
         replace cap_bigg30 = 0 if cap_bigg30 == .
         gen irt_bigg30 = irt
+        gen vig_bigg30 = vig
         drop n tot new
         save `all' , replace
         
@@ -98,6 +106,7 @@ qui {
       bys country hf_level : gen cap_bigg40 = new if _n <= tot
         replace cap_bigg40 = 0 if cap_bigg40 == .
         gen irt_bigg40 = irt
+        gen vig_bigg40 = vig
         drop n tot new
         save `all' , replace
         
@@ -108,12 +117,14 @@ qui {
       bys country hf_level : gen cap_bigg50 = new if _n <= tot
         replace cap_bigg50 = 0 if cap_bigg50 == .
         gen irt_bigg50 = irt
+        gen vig_bigg50 = vig
         drop n tot new
       
   // Restricted to type resort
   preserve
   gsort country hf_type -irt
-    keep country hf_type irt
+    keep country hf_type irt vig
+    ren vig vig_hftype
     ren irt irt_hftype
     gen ser_hftype = _n
     save `irt' , replace
@@ -127,7 +138,8 @@ qui {
   // Restricted to cadre resort
   preserve
   gsort country cadre -irt
-    keep country cadre irt
+    keep country cadre irt vig
+    ren vig vig_cadres
     ren irt irt_cadres
     gen ser_cadres = _n
     save `irt' , replace
@@ -141,7 +153,8 @@ qui {
   // Unrestricted resort
   preserve
   gsort country -irt
-    keep country irt cap
+    keep country irt cap vig
+    ren vig vig_unrest
     ren irt irt_unrest
     gen ser_unrest = _n
     save `irt' , replace
@@ -155,7 +168,8 @@ qui {
   // Restricted to level resort
   preserve
   gsort country hf_level -irt
-    keep country hf_level irt cap
+    keep country hf_level irt cap  vig
+    ren vig vig_levels
     ren irt irt_levels
     gen ser_levels = _n
     save `irt' , replace
@@ -169,7 +183,8 @@ qui {
   // Restricted to zone resort
   preserve
   gsort country hf_rural -irt
-    keep country hf_rural irt cap
+    keep country hf_rural irt cap vig
+    ren vig vig_rururb
     ren irt irt_rururb
     gen ser_rururb = _n
     save `irt' , replace
@@ -183,7 +198,8 @@ qui {
   // Restricted to sector resort
   preserve
   gsort country public -irt
-    keep country public irt cap
+    keep country public irt cap vig
+    ren vig vig_public
     ren irt irt_public
     gen ser_public = _n
     save `irt' , replace
@@ -195,7 +211,7 @@ qui {
     merge 1:1 ser_public using `irt' , nogen
 }
 
-  ren (irt cap) (irt_old cap_old)
+  ren (irt cap vig) (irt_old cap_old vig_old)
     egen c = rowmean(treat?)
     reg c c.irt_old##i.country 
     
@@ -206,9 +222,8 @@ use "${git}/data/capacity-optimized.dta" , clear
   tempfile all
 
   preserve
-    collapse irt_old [aweight=cap_old] , by(country)
-      predict c
-      ren c irt_xxx
+    collapse irt_old vig_old [aweight=cap_old] , by(country)
+      ren vig_old irt_xxx
       reshape long irt , i(country) j(x) string
     save `all' , replace
   restore
@@ -217,11 +232,8 @@ use "${git}/data/capacity-optimized.dta" , clear
     unrest hftype levels rururb public cadres ///
     biggco biggse bigg20 bigg30 bigg40 bigg50 {
     preserve
-      collapse irt_`type' [aweight=cap_`type'] , by(country)
-        gen irt_old = irt_`type'
-        predict c
-        ren c irt_xxx
-        drop irt_old
+      collapse irt_`type' vig_`type' [aweight=cap_`type'] , by(country)
+        ren vig_`type' irt_xxx
         reshape long irt , i(country) j(x) string
         ren irt irt_`type'
         replace x = "_old" if x != "_xxx"
@@ -232,19 +244,23 @@ use "${git}/data/capacity-optimized.dta" , clear
   
   use `all' , clear
     egen mean = rowmean(irt_*)
+    egen dmean = rowmean(irt_bigg50 irt_bigg40 irt_bigg30 irt_bigg20 irt_biggse irt_biggco)
+    egen smean = rowmean(irt_cadres irt_public irt_rururb irt_levels irt_hftype irt_unrest)
     gen dif = mean - irt
+    gen sdif = smean - irt
+    gen sdif = smean - irt
   
   sort x country
     replace x = "Knowledge" if x == "_old"
     replace x = "Correct" if x == "_xxx"
   
   export excel country x ///
-    irt mean dif irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
+    irt smean sdif irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(var)
   
   export excel country x ///
-    irt mean dif irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
+    irt dmean ddif irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
     using "${git}/output/t-optimize-quality-d.xlsx" ///
   , replace first(var)
   
@@ -394,7 +410,7 @@ tempfile all
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
      bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-     ciopts(lc(gs12) mstyle(none)) 
+     ciopts(lc(gs12) mstyle(none)) nooverall
      
    
      graph export "${git}/output/f-lit-1.png" , replace
@@ -404,7 +420,7 @@ tempfile all
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
      bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-     ciopts(lc(gs12) mstyle(none)) 
+     ciopts(lc(gs12) mstyle(none)) nooverall
      
      graph export "${git}/output/f-lit-2.png" , replace
 
