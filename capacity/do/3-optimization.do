@@ -3,21 +3,21 @@
 **************************************************
 
 // Summary table: Sectoral shares and statistics
-use "${git}/data/capacity.dta", clear  
+use "${git}/data/capacity.dta", clear
 
   gen hf_outpatient_day = hf_outpatient/60
   clonevar cap_old = hf_outpatient_day
   clonevar irt_old = irt
-  
+
   collapse (mean) hf_outpatient_day hf_staff_op irt_old ///
     (rawsum) cap_old , by(country hf_level)
-    
+
     expand 2 , gen(check)
       replace country = 0 if check == 1
-  
+
   collapse (mean) hf_outpatient_day hf_staff_op irt_old ///
     (rawsum) cap_old , by(country hf_level)
-    
+
     drop if hf_level == . | cap_old == 0
     recode hf_level (1=1 "Health Post")(2=3 "Hospital")(3=2 "Clinic") , gen(level)
     sort country level
@@ -25,16 +25,18 @@ use "${git}/data/capacity.dta", clear
   gen c2 = hf_outpatient_day/hf_staff_op
   egen temp = sum(cap_old) , by(country)
   gen n = cap_old/temp
- 
+  gen t = c2 * (6.8/60)
+
   lab var n "Outpatient Share"
   lab var irt_old "Mean Competence"
-  lab var hf_outpatient_day "Daily Outpatients per Facility" 
-  lab var hf_staff_op "Outpatient Staff" 
-  lab var c2 "Outpatients per Staff Day" 
+  lab var hf_outpatient_day "Daily Outpatients per Facility"
+  lab var hf_staff_op "Outpatient Staff"
+  lab var c2 "Outpatients per Staff Day"
   lab var level "Level"
- 
+  lab var t "Hours per Provider Day"
+
   export excel ///
-    country level hf_outpatient_day hf_staff_op c2 n irt  ///
+    country level hf_outpatient_day hf_staff_op c2 t n irt_old  ///
   using "${git}/output/t-summary-capacity.xlsx" ///
   , replace first(varl)
 
@@ -43,18 +45,18 @@ use "${git}/data/capacity.dta", clear
   drop if hf_type == . | hf_outpatient == 0
   gen cap = hf_outpatient/(60*hf_staff_op)
     drop if cap == .
-  
+
   egen vig = rowmean(treat?)
-  
+
   tempfile irt all
   keep country irt cap hf_type hf_level hf_rural public cadre ///
     hf_staff_op hf_outpatient hf_inpatient treat? vig
   save `all'
-  
+
 
 
 qui {
-  // Capacity adjustment resorts  
+  // Capacity adjustment resorts
     collapse (p90) new=cap (rawsum) n=cap , by(country)
       merge 1:m country using `all' , nogen
       gsort country -irt
@@ -65,7 +67,7 @@ qui {
         gen vig_biggco = vig
         drop n tot new
         save `all' , replace
-        
+
     collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
       merge 1:m country hf_level using `all' , nogen
       gsort country hf_level -irt
@@ -76,7 +78,7 @@ qui {
         gen vig_biggse = vig
         drop n tot new
         save `all' , replace
-        
+
     collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
       merge 1:m country hf_level using `all' , nogen
       gsort country hf_level -irt
@@ -87,7 +89,7 @@ qui {
         gen vig_bigg20 = vig
         drop n tot new
         save `all' , replace
-        
+
     collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
       merge 1:m country hf_level using `all' , nogen
       gsort country hf_level -irt
@@ -98,7 +100,7 @@ qui {
         gen vig_bigg30 = vig
         drop n tot new
         save `all' , replace
-        
+
     collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
       merge 1:m country hf_level using `all' , nogen
       gsort country hf_level -irt
@@ -109,7 +111,7 @@ qui {
         gen vig_bigg40 = vig
         drop n tot new
         save `all' , replace
-        
+
     collapse (p90) new=cap (rawsum) n=cap , by(country hf_level)
       merge 1:m country hf_level using `all' , nogen
       gsort country hf_level -irt
@@ -119,7 +121,7 @@ qui {
         gen irt_bigg50 = irt
         gen vig_bigg50 = vig
         drop n tot new
-      
+
   // Restricted to type resort
   preserve
   gsort country hf_type -irt
@@ -129,12 +131,12 @@ qui {
     gen ser_hftype = _n
     save `irt' , replace
   restore
-  
+
   gsort country hf_type -cap
     gen cap_hftype = cap
     gen ser_hftype = _n
     merge 1:1 ser_hftype using `irt' , nogen
-    
+
   // Restricted to cadre resort
   preserve
   gsort country cadre -irt
@@ -144,12 +146,12 @@ qui {
     gen ser_cadres = _n
     save `irt' , replace
   restore
-  
+
   gsort country cadre -cap
     gen cap_cadres = cap
     gen ser_cadres = _n
     merge 1:1 ser_cadres using `irt' , nogen
-  
+
   // Unrestricted resort
   preserve
   gsort country -irt
@@ -159,12 +161,12 @@ qui {
     gen ser_unrest = _n
     save `irt' , replace
   restore
-  
+
   gsort country -cap
     gen cap_unrest = cap
     gen ser_unrest = _n
     merge 1:1 ser_unrest using `irt' , nogen
-    
+
   // Restricted to level resort
   preserve
   gsort country hf_level -irt
@@ -174,12 +176,12 @@ qui {
     gen ser_levels = _n
     save `irt' , replace
   restore
-  
+
   gsort country hf_level -cap
     gen cap_levels = cap
     gen ser_levels = _n
     merge 1:1 ser_levels using `irt' , nogen
-    
+
   // Restricted to zone resort
   preserve
   gsort country hf_rural -irt
@@ -189,12 +191,12 @@ qui {
     gen ser_rururb = _n
     save `irt' , replace
   restore
-  
+
   gsort country hf_rural -cap
     gen cap_rururb = cap
     gen ser_rururb = _n
     merge 1:1 ser_rururb using `irt' , nogen
-  
+
   // Restricted to sector resort
   preserve
   gsort country public -irt
@@ -204,7 +206,7 @@ qui {
     gen ser_public = _n
     save `irt' , replace
   restore
-  
+
   gsort country public -cap
     gen cap_public = cap
     gen ser_public = _n
@@ -213,10 +215,10 @@ qui {
 
   ren (irt cap vig) (irt_old cap_old vig_old)
     egen c = rowmean(treat?)
-    reg c c.irt_old##i.country 
-    
+    reg c c.irt_old##i.country
+
   save "${git}/data/capacity-optimized.dta" , replace
-  
+
 // Create comparative statistics
 use "${git}/data/capacity-optimized.dta" , clear
   tempfile all
@@ -227,7 +229,7 @@ use "${git}/data/capacity-optimized.dta" , clear
       reshape long irt , i(country) j(x) string
     save `all' , replace
   restore
-  
+
   qui foreach type in ///
     unrest hftype levels rururb public cadres ///
     biggco biggse bigg20 bigg30 bigg40 bigg50 {
@@ -241,7 +243,7 @@ use "${git}/data/capacity-optimized.dta" , clear
       save `all' , replace
     restore
   }
-  
+
   use `all' , clear
     egen mean = rowmean(irt_*)
     egen dmean = rowmean(irt_bigg50 irt_bigg40 irt_bigg30 irt_bigg20 irt_biggse irt_biggco)
@@ -249,21 +251,21 @@ use "${git}/data/capacity-optimized.dta" , clear
     gen dif = mean - irt
     gen sdif = smean - irt
     gen sdif = smean - irt
-  
+
   sort x country
     replace x = "Knowledge" if x == "_old"
     replace x = "Correct" if x == "_xxx"
-  
+
   export excel country x ///
     irt smean sdif irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(var)
-  
+
   export excel country x ///
     irt dmean ddif irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
     using "${git}/output/t-optimize-quality-d.xlsx" ///
   , replace first(var)
-  
+
   save "${git}/data/capacity-comparison.dta" , replace
 
 **************************************************
@@ -272,18 +274,18 @@ use "${git}/data/capacity-optimized.dta" , clear
 
 // Create optimized allocation images
 use "${git}/data/capacity-optimized.dta", clear
-              
-  // Data setup       
+
+  // Data setup
     replace cap_hftype = 1 if cap_hftype < 1
     replace cap_hftype = 100 if cap_hftype > 100
-    
+
     replace cap_old = 1 if cap_old < 1
     replace cap_old = 100 if cap_old > 100
-    
-  // Graphs    
-  
+
+  // Graphs
+
     qui su cap_old , d
-    
+
     tw ///
       (lpoly cap_old irt_old , lc(red) lw(thick) ) ///
       (scatter cap_old irt_old , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
@@ -293,11 +295,11 @@ use "${git}/data/capacity-optimized.dta", clear
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
       xlab(, tl(0)) xtit("Provider Competence") ///
       yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
-      
+
       graph save "${git}/output/f-optimization-1.gph" , replace
-    
+
     qui su cap_old , d
-      
+
     tw ///
       (lpoly cap_hftype irt_hftype , lc(red) lw(thick) ) ///
       (scatter cap_hftype irt_hftype , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
@@ -307,14 +309,14 @@ use "${git}/data/capacity-optimized.dta", clear
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
       xlab(, tl(0)) xtit("Provider Competence") ///
       yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
-      
+
       graph save "${git}/output/f-optimization-2.gph" , replace
-        
+
     graph combine ///
       "${git}/output/f-optimization-1.gph" ///
       "${git}/output/f-optimization-2.gph" ///
       , r(1) ysize(8) imargin(1 1 -1 -1 )
-     
+
       graph export "${git}/output/f-optimization.png" , width(3000) replace
 
 
@@ -326,7 +328,7 @@ tempfile all
     collapse (mean) irt_old (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
     save `all' , replace
   restore
-  
+
   foreach type in unrest hftype levels rururb public {
     preserve
       collapse irt_`type' [aweight=cap_`type'] , by(country hf_type)
@@ -334,14 +336,14 @@ tempfile all
       save `all' , replace
     restore
   }
-  
+
   use `all' , clear
-  
+
   egen temp = sum(cap_old) , by(country)
   gen n = cap_old/temp
-  
+
 // Visualize sectoral changes
-         
+
   local style msize(small)
   tw ///
     (pcarrow irt_old n irt_hftype n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
@@ -359,7 +361,7 @@ tempfile all
     legend(size(small) symxsize(small) c(4) ///
       order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
             0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
-            
+
     graph export "${git}/output/f-optimize-differences.png" , width(3000) replace
 
 **************************************************
@@ -368,31 +370,31 @@ tempfile all
   use "${git}/data/capacity-comparison.dta" , clear
     keep if x == "Correct"
     ren irt irt_old
-    
+
     egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
     egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
     clonevar effect_size = mean
-    
+
     replace _meta_ciu = _meta_ciu - irt_old
     replace _meta_cil = _meta_cil - irt_old
     replace effect_size = effect_size - irt_old
-    
+
     replace _meta_ciu = _meta_ciu * 100
     replace _meta_cil = _meta_cil * 100
     replace effect_size = effect_size * 100
-    
+
     keep country _meta_ciu _meta_cil effect_size
-    
+
     append using "${git}/data/comparison.dta" , gen(sgroup)
-  
-   replace std_err = (_meta_ciu - _meta_cil) / 4 
-   
+
+   replace std_err = (_meta_ciu - _meta_cil) / 4
+
    decode country, gen(temp)
      replace CountryName = temp if temp !=""
    meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
-   
+
    replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
-   
+
    gen region = " SDI Study"
    replace region = "Africa" if WHO_Region2 == "AFRO"
    replace region = "Americas" if WHO_Region2 == "AMRO"
@@ -400,28 +402,28 @@ tempfile all
    replace region = "South Asia" if WHO_Region2 == "SEARO"
    replace region = "Western Pacific" if WHO_Region2 == "WPRO"
    drop if WHO_Region2 == "EURO"
-   
+
    replace Outcome_definition = strtrim(Outcome_definition)
    lab var Outcome_definition "Outcome"
    replace Outcome_definition = "Provider Reallocation: General Correct Management" if Outcome_definition == ""
-  
+
    meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & (region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
      bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
      ciopts(lc(gs12) mstyle(none)) nooverall
-     
-   
+
+
      graph export "${git}/output/f-lit-1.png" , replace
-   
+
    meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
      & !(region == " SDI Study" | region == "Africa") ///
    , subgroup(region) sort(effect_size) ///
      nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
      bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
      ciopts(lc(gs12) mstyle(none)) nooverall
-     
+
      graph export "${git}/output/f-lit-2.png" , replace
 
 
