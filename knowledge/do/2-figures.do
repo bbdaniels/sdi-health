@@ -80,7 +80,7 @@ use "${git}/data/knowledge.dta", clear
 
     graph combine `graphs' , c(2) ysize(5)
       graph export "${git}/outputs/f-validation.png", replace
--
+
 // Figure. Treatment accuracy by knowledge
 use "${git}/data/knowledge.dta", clear
   tempfile 1 2
@@ -128,13 +128,24 @@ use "${git}/data/knowledge.dta", clear
 use "${git}/data/knowledge.dta", clear
 
   expand 2 , gen(total)
-    replace country = "Full Sample" if total == 1
+    replace country = " [HDI] Full Sample" if total == 1
+    replace country = "[143] " + country if country == "Kenya"
+    replace country = "[159] " + country if country == "Uganda"
+    replace country = "[175] " + country if country == "Guinea Bissau"
+    replace country = "[164] " + country if country == "Madagascar"
+    replace country = "[174] " + country if country == "Malawi"
+    replace country = "[181] " + country if country == "Mozambique"
+    replace country = "[189] " + country if country == "Niger"
+    replace country = "[161] " + country if country == "Nigeria"
+    replace country = "[182] " + country if country == "Sierra Leone"
+    replace country = "[163] " + country if country == "Tanzania"
+    replace country = "[167] " + country if country == "Togo"
 
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
     yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
     yscale(noline) xscale(noline) xlab(-5(1)5 0 , labsize(small) notick) ///
-    den(lw(none) fc(gs14) fi(70)) bar(fc(red) lw(none)) ///
+    den(lw() lc(black) fc(black%0)) bar(fc(red) lw(none)) ///
     line(lw(none)) med(m(|) mc(red) msize(large)) ///
     note("Provider competence score {&rarr}")
 
@@ -161,7 +172,7 @@ use "${git}/data/knowledge.dta", clear
     , over(provider_cadre1) xline(-3(1)3,lc(black) lw(thin))  hor ///
       yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(7) ///
       yscale(noline) xscale(noline) xlab(-3(1)3 0 , labsize(small)) ///
-      den(lw(none) fc(gs14) fi(70)) bar(fc(red) lw(none)) ///
+      den(lw(none) fc(black%80)) bar(fc(red) lw(none)) ///
       line(lw(none)) med(m(|) mc(red) msize(large)) ///
       title("{bf:`x'} - {it:Doctors above median Kenyan nurse: [`pct'%]}"  ///
         , size(medsmall) span pos(11) ring(1)) note("Provider competence score {&rarr}") ///
@@ -235,7 +246,7 @@ egen upq = pctile(theta_mle), p(75) by(country provider_age1)
 
 histogram provider_age1, by(country , ixaxes note(" ") ///
     legend(r(1) pos(12) order(1 "Age" 2 "Correct Management Mean" 3 "25th and 75th Percentiles") size(small))) ///
-  start(15) w(5) fc(gs14) lc(none)  ///
+  start(15) w(5) fc(black%80) lc(none)  ///
   barwidth(4) percent ylab(0 "{&uarr} Age (%)" 10 "10%" 20 "20%" 30 "30%") yscale(alt) yscale(alt axis(2)) ///
   xlab(10 "Age {&rarr}" 20(10)70  , labsize(vsmall)) ///
   ylab(-3 "Competence {&uarr}" -2(1)2 , axis(2)) ///
