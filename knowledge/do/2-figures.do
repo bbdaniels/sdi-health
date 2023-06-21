@@ -1,40 +1,86 @@
 // Figures for knowledge paper
 
 // Figure. Internal consistency
-use "${git}/data/knowledge.dta", clear
 
+// Get item parameters
+local 3pl "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/_Archive/SDI WBG/SDI/SDI Import/data/analysis/dta/irt_output_items.dta"
+  use "`3pl'"  , clear
+// Plot
+use "${git}/data/knowledge.dta", clear
+  ren diabetes_history_numblimb diabetes_history_numb_limb
   egen check = rowmean(*history*)
   lab var check "Completion %: All History Questions"
   lab var diarrhea_history_duration "Diarrhoea: Duration"
   lab var tb_history_sputum "Tuberculosis: Productive Cough"
-  lab var malaria_history_fevertype "Malaria: Fever Pattern"
+  lab var malaria_history_headache "Malaria: Headache"
   lab var pph_history_pph "PPH: Prior Occurrence"
-  lab var diabetes_history_numblimb "Diabetes: Limb Numbness"
+  lab var diabetes_history_numb_limb "Diabetes: Limb Numbness"
 
   local graphs ""
-  qui foreach var of varlist ///
-    check ///
+
+    preserve
+      use "`3pl'" , clear
+      collapse (mean) a_pv1 b_pv1 c_pv1
+      local a = a_pv1[1]
+      local b = b_pv1[1]
+      local c = c_pv1[1]
+    restore
+    preserve
+      xtile c = theta_mle , n(100)
+
+      local title :  var lab check
+      collapse (mean) check theta_mle  , by(c) fast
+
+      local graphs `"`graphs' "\`check'"  "'
+      tempfile check
+
+    tw ///
+      (function `c'+(1-`c')*(exp(`a'*(x-`b')))/(1+exp(`a'*(x-`b'))) ///
+       , range(-5 5) lc(red) lw(thick)) ///
+      (scatter check theta_mle , mc(black)) ///
+    , ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
+      yscale(noline) xscale(noline) ytit(" ") title("{bf:`title'}" , size(small)) ///
+      xlab(0 "" 5 "+5" -5 "-5" -1 " " -2 " " -3 " " -4 " " 1 " " 2 " " 3 " " 4 " ") ///
+        note("Provider competence score {&rarr}") xtit("") ///
+      saving(`check') nodraw
+    restore
+
+   foreach var of varlist ///
     diarrhea_history_duration tb_history_sputum ///
-    malaria_history_fevertype pph_history_pph ///
-    diabetes_history_numblimb  {
+    malaria_history_headache pph_history_pph ///
+    diabetes_history_numb_limb  {
 
-      local title :  var lab `var'
-      local graphs `"`graphs' "\``var''"  "'
-      tempfile `var'
+      preserve
+        use "`3pl'" , clear
+        keep if varname == "`var'"
+        local a = a_pv1[1]
+        local b = b_pv1[1]
+        local c = c_pv1[1]
+      restore
+      preserve
+        xtile c = theta_mle , n(100)
 
-      binsreg `var' theta_mle , polyreg(10) ///
-        dotsplotopt(mc(black)) polyregplotopt(lc(red) lw(thick)) ///
-        ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
+        local title :  var lab `var'
+        collapse (mean) `var' theta_mle  , by(c) fast
+
+        local graphs `"`graphs' "\``var''"  "'
+        tempfile `var'
+
+      tw ///
+        (function `c'+(1-`c')*(exp(`a'*(x-`b')))/(1+exp(`a'*(x-`b'))) ///
+         , range(-5 5) lc(red) lw(thick)) ///
+        (scatter `var' theta_mle , mc(black)) ///
+      , ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
         yscale(noline) xscale(noline) ytit(" ") title("{bf:`title'}" , size(small)) ///
         xlab(0 "" 5 "+5" -5 "-5" -1 " " -2 " " -3 " " -4 " " 1 " " 2 " " 3 " " 4 " ") ///
           note("Provider competence score {&rarr}") xtit("") ///
         saving(``var'') nodraw
-
+      restore
     }
 
     graph combine `graphs' , c(2) ysize(5)
       graph export "${git}/outputs/f-validation.png", replace
-
+-
 // Figure. Treatment accuracy by knowledge
 use "${git}/data/knowledge.dta", clear
   tempfile 1 2

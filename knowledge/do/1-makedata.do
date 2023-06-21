@@ -273,7 +273,7 @@
 ******************************/
 
 iecodebook export using "${git}/data/knowledge.xlsx" ///
-  , replace save sign verify reset
+  , replace save sign verify
 
 
 /*****************************
@@ -300,6 +300,6 @@ iecodebook export using "${git}/data/knowledge.xlsx" ///
   replace treat   = 1 if treat==100
 
   iecodebook export using "${git}/data/knowledge-long.xlsx" ///
-    , replace save sign reset
+    , replace save sign
 
 ************************************* End of do-file ******************************************************
