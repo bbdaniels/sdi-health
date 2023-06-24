@@ -1,7 +1,7 @@
 // Queueing simulation
 
 cap prog drop q_up
-prog def q_up
+prog def q_up , rclass
 
 args periods patients duration
 
@@ -19,6 +19,7 @@ args periods patients duration
     expand 2 in 1
     gsort -period
     replace period = `i' in 1
+    local shift = 0
 
     local pos ""
     local q 1
@@ -50,8 +51,10 @@ args periods patients duration
     drop r
 
     // Advance patients if service is open
-    if "`=service[1]'" == "." {
+    if "`=service[1]'" == "." & "`=q1[1]'" != "." {
       replace service = q1 in 1
+      local total_wait = `total_wait' + `=service[1]'
+      local total_pats = `total_pats' + 1
       local shift = 1
     }
 
@@ -63,11 +66,19 @@ args periods patients duration
       }
       else replace `var' = . in 1
     }
-    local shift = 0
 
     }
 
+    // Calculate statistics
+    return scalar total_wait = `total_wait'
+    return scalar total_pats = `total_pats'
+    return scalar mean_wait  = `total_wait'/`total_pats'
+
+    qui count if service != .
+    return scalar total_work = `r(N)'
+    return scalar work_time  = `r(N)'/`periods'
+
 end
 
-q_up 1000 50 10
+q_up 720 100 5
 // End
