@@ -248,8 +248,7 @@ use "${git}/data/capacity-optimized.dta" , clear
     egen mean = rowmean(irt_*)
     egen dmean = rowmean(irt_bigg50 irt_bigg40 irt_bigg30 irt_bigg20 irt_biggse irt_biggco)
     egen smean = rowmean(irt_cadres irt_public irt_rururb irt_levels irt_hftype irt_unrest)
-    gen dif = mean - irt
-    gen sdif = smean - irt
+    gen ddif = mean - irt
     gen sdif = smean - irt
 
   sort x country
@@ -267,6 +266,41 @@ use "${git}/data/capacity-optimized.dta" , clear
   , replace first(var)
 
   save "${git}/data/capacity-comparison.dta" , replace
+
+**************************************************
+// Part 1.2: Vizualizations for correctness
+**************************************************
+
+use "${git}/data/capacity-comparison.dta", clear
+
+  keep irt dmean smean country x
+  reshape wide irt dmean smean, i(country) j(x) string
+  decode country, gen(ccode)
+
+  append using "${git}/data/capacity-optimized.dta"
+  egen correct = rowmean(treat?)
+
+
+  tw (fpfitci correct irt_old ///
+      if irt_old > -2 & irt_old < 2 , lc(black) fc(gray) alc(white%0)) ///
+    (pcarrow irtCorrect irtKnowledge dmeanCorrect dmeanKnowledge ///
+      , ml(country) mlabang(30) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
+    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%") ///
+      xtit("Average Interaction Competence Before and After Reallocation") ///
+      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
+
+      graph export "${git}/output/f-optimization-demand.png" , width(3000) replace
+
+  tw (fpfitci correct irt_old ///
+      if irt_old > -2 & irt_old < 3 , lc(black) fc(gray) alc(white%0)) ///
+    (pcarrow irtCorrect irtKnowledge smeanCorrect smeanKnowledge ///
+      ,  ml(country) mlabang(30) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
+    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%") ///
+      xtit("Average Interaction Competence Before and After Reallocation") ///
+      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
+
+      graph export "${git}/output/f-optimization-supply.png" , width(3000) replace
+
 
 **************************************************
 // Part 2: Vizualizations for sectoral restriction
@@ -367,71 +401,148 @@ tempfile all
 **************************************************
 // Part 3: Resort bootstrap and comparison
 **************************************************
-  use "${git}/data/capacity-comparison.dta" , clear
-    keep if x == "Correct"
-    ren irt irt_old
+use "${git}/data/capacity-comparison.dta" , clear
+  keep if x == "Correct"
+  ren irt irt_old
 
-    egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
-    egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
-    clonevar effect_size = mean
+  egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
+  egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
+  clonevar effect_size = mean
 
-    replace _meta_ciu = _meta_ciu - irt_old
-    replace _meta_cil = _meta_cil - irt_old
-    replace effect_size = effect_size - irt_old
+  replace _meta_ciu = _meta_ciu - irt_old
+  replace _meta_cil = _meta_cil - irt_old
+  replace effect_size = effect_size - irt_old
 
-    replace _meta_ciu = _meta_ciu * 100
-    replace _meta_cil = _meta_cil * 100
-    replace effect_size = effect_size * 100
+  replace _meta_ciu = _meta_ciu * 100
+  replace _meta_cil = _meta_cil * 100
+  replace effect_size = effect_size * 100
 
-    keep country _meta_ciu _meta_cil effect_size
+  keep country _meta_ciu _meta_cil effect_size
 
-    append using "${git}/data/comparison.dta" , gen(sgroup)
+  append using "${git}/data/comparison.dta" , gen(sgroup)
 
-   replace std_err = (_meta_ciu - _meta_cil) / 4
+ replace std_err = (_meta_ciu - _meta_cil) / 4
 
-   decode country, gen(temp)
-     replace CountryName = temp if temp !=""
-   meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
+ decode country, gen(temp)
+   replace CountryName = temp if temp !=""
+ meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
 
-   replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
+ replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
 
-   gen region = " SDI Study"
-   replace region = "Africa" if WHO_Region2 == "AFRO"
-   replace region = "Americas" if WHO_Region2 == "AMRO"
-   replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
-   replace region = "South Asia" if WHO_Region2 == "SEARO"
-   replace region = "Western Pacific" if WHO_Region2 == "WPRO"
-   drop if WHO_Region2 == "EURO"
+ gen region = " SDI Study"
+ replace region = "Africa" if WHO_Region2 == "AFRO"
+ replace region = "Americas" if WHO_Region2 == "AMRO"
+ replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
+ replace region = "South Asia" if WHO_Region2 == "SEARO"
+ replace region = "Western Pacific" if WHO_Region2 == "WPRO"
+ drop if WHO_Region2 == "EURO"
 
-   replace Outcome_definition = strtrim(Outcome_definition)
-   lab var Outcome_definition "Outcome"
-   replace Outcome_definition = "Provider Reallocation: General Correct Management" if Outcome_definition == ""
+ replace Outcome_definition = strtrim(Outcome_definition)
+ lab var Outcome_definition "Outcome"
+ replace Outcome_definition = "Provider Reallocation: General Correct Management" if Outcome_definition == ""
 
-   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-     & (region == " SDI Study" | region == "Africa") ///
-   , subgroup(region) sort(effect_size) ///
-     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
-     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-     ciopts(lc(gs12) mstyle(none)) nooverall
+ meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
+   & (region == " SDI Study" | region == "Africa") ///
+ , subgroup(region) sort(effect_size) ///
+   nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+   bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+   ciopts(lc(gs12) mstyle(none)) nooverall
 
 
-     graph export "${git}/output/f-lit-1.png" , replace
+   graph export "${git}/output/f-lit-1.png" , replace
 
-   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-     & !(region == " SDI Study" | region == "Africa") ///
-   , subgroup(region) sort(effect_size) ///
-     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
-     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-     ciopts(lc(gs12) mstyle(none)) nooverall
+ meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
+   & !(region == " SDI Study" | region == "Africa") ///
+ , subgroup(region) sort(effect_size) ///
+   nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+   bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+   ciopts(lc(gs12) mstyle(none)) nooverall
 
-     graph export "${git}/output/f-lit-2.png" , replace
+   graph export "${git}/output/f-lit-2.png" , replace
 
 
 // Save for comparison
 
-  gen check = 1
-  ren d2 effect_size
-  replace effect_size=effect_size*100
-  save "${git}/temp/optimize-comparison.dta" , replace
+gen check = 1
+replace effect_size=effect_size*100
+save "${git}/output/optimize-comparison.dta" , replace
+
+**************************************************
+// Part 4: Doctor resampling
+**************************************************
+
+clear
+tempfile all
+  save `all' , emptyok
+use "${git}/data/capacity-optimized.dta" , clear
+gen uid = _n
+
+gen doctor = (cadre == 1)
+keep doctor irt_old country cap_old uid
+
+levelsof country, local(cs)
+
+
+foreach c in `cs' {
+
+  preserve
+  keep if doctor == 1 & country == `c'
+  clonevar irt_doc = irt_old
+  tempfile doctors
+  save `doctors'
+  restore
+
+  preserve
+  keep if doctor == 0 & country == `c'
+  cross using `doctors'
+
+  append using `all'
+  append using `doctors'
+  save `all' , replace
+  restore
+
+}
+use `all' , clear
+save "${git}/output/optimize-doctors-basis.dta" , replace
+-
+
+cap prog drop upskill
+prog def upskill
+
+args frac
+
+    use "${git}/output/optimize-doctors-basis.dta" , clear
+
+    gen r = runiform()
+      replace r = 0 if doctor == 1
+    bys uid (r) : gen v = _n
+     keep if v == 1
+
+    bys country: egen rank = rank(r)
+    gsort country -doctor rank
+      bys country: gen N = _N
+      replace rank = rank/N
+
+    gen irt_new = irt_old
+      replace irt_new = irt_doc if rank < `frac' & irt_doc > irt_new
+
+    collapse irt_new [aweight=cap_old] , by(country)
+    gen f = `frac'
+
+end
+
+clear
+tempfile all
+  save `all' , replace emptyok
+
+  qui forv f = 0.1(0.1)1 {
+    forv it = 1/10 {
+      upskill `f'
+      append using `all'
+      save `all' , replace
+    }
+  }
+
+
 
 //

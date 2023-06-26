@@ -36,6 +36,8 @@ args periods patients duration
     // Spawn new patient at end of queue
     gen r = runiform()
     if `=r[1]' < `p_patient' {
+      local total_pats = `total_pats' + 1
+
       if "`=q`pos'[1]'" == "." {
         replace q`pos' = 0 in 1
       }
@@ -54,7 +56,6 @@ args periods patients duration
     if "`=service[1]'" == "." & "`=q1[1]'" != "." {
       replace service = q1 in 1
       local total_wait = `total_wait' + `=service[1]'
-      local total_pats = `total_pats' + 1
       local shift = 1
     }
 
@@ -77,8 +78,102 @@ args periods patients duration
     qui count if service != .
     return scalar total_work = `r(N)'
     return scalar work_time  = `r(N)'/`periods'
+    return scalar idle_time  = 1 - `r(N)'/`periods'
 
 end
 
-q_up 720 100 5
+local x = 1
+foreach seed in 969264 089365 739579 8029288 {
+  set seed `seed'
+  qui q_up 360 30 10
+    return list
+      local idle : di %3.2f `r(idle_time)'
+      local wait : di %3.1f `r(mean_wait)'
+
+    egen check = rownonmiss(q*)
+    replace period = period/60
+    gen zero = 0
+    tw (rarea check zero  period , lc(white%0) fc(gray) connect(stairstep))(line check period , lc(black) connect(stairstep))(scatter check period if service == . , mc(red) m(.)) ///
+      , ytit("Patients in Queue") yscale(r(0)) ylab(#6) ///
+        xtit("Idle Share: `idle' | Mean Wait: `wait' Min.") xlab(0 "Hours {&rarr}" 1 2 3 4 5 6 "Close") xoverhang ///
+        legend(on order(3 "No Patients" 2 "Serving Patients" 1 "Patients Waiting") r(1)  pos(12) ring(1) symxsize(small))
+
+       graph save "${git}/output/queue-`x'.gph" , replace
+       local ++x
+}
+
+grc1leg ///
+"${git}/output/queue-1.gph" ///
+"${git}/output/queue-2.gph" ///
+"${git}/output/queue-3.gph" ///
+"${git}/output/queue-4.gph" ///
+ , altshrink
+
+ graph draw, ysize(6)
+ graph export "${git}/output/queue-1.png" , width(3000) replace
+
+local x = 1
+set seed 123396
+foreach pats in 15 20 30 40 {
+ qui q_up 360 `pats' 10
+   return list
+     local idle : di %3.2f `r(idle_time)'
+     local wait : di %3.1f `r(mean_wait)'
+     local pati = `r(total_pats)'
+
+   egen check = rownonmiss(q*)
+   replace period = period/60
+   gen zero = 0
+   tw (rarea check zero  period , lc(white%0) fc(gray) connect(stairstep))(line check period , lc(black) connect(stairstep))(scatter check period if service == . , mc(red) m(.)) ///
+     , ytit("Patients in Queue") yscale(r(0)) ylab(#6) ///
+       xtit("Patients/Day: `pats' | Idle Share: `idle' | Mean Wait: `wait' Min.") xlab(0 "Hours {&rarr}" 1 2 3 4 5 6 "Close") xoverhang ///
+       legend(on order(3 "No Patients" 2 "Serving Patients" 1 "Patients Waiting") r(1)  pos(12) ring(1) symxsize(small))
+
+      graph save "${git}/output/queue-`x'.gph" , replace
+      local ++x
+}
+
+grc1leg ///
+"${git}/output/queue-1.gph" ///
+"${git}/output/queue-2.gph" ///
+"${git}/output/queue-3.gph" ///
+"${git}/output/queue-4.gph" ///
+, altshrink
+
+graph draw, ysize(6)
+graph export "${git}/output/queue-2.png" , width(3000) replace
+
+
+clear
+tempfile results
+save `results' , emptyok
+
+set seed 836503
+foreach pats in  15 20 30 40 {
+
+  simulate ///
+    wait = r(mean_wait) idle = r(idle_time) ///
+    , reps(100) ///
+    : q_up 360 `pats' 10
+
+    gen pats = `pats'
+
+    append using `results'
+      save `results' , replace
+
+}
+
+  replace wait = 1 if wait < 1
+  tw (scatter idle wait if pats == 15 , mc(black)) ///
+     (scatter idle wait if pats == 20 , mc(red) m(t)) ///
+     (scatter idle wait if pats == 30 , mc(blue) m(S)) ///
+     (scatter idle wait if pats == 40 , mc(green) m(D)) ///
+  , legend(on pos(2) c(1) ring(0) ///
+    order(1 "15 Patients/Day" 2 "20 Patients/Day" 3 "30 Patients/Day" 4 "40 Patients/Day")) ///
+    xtit("Mean Waiting Time for Serviced Patients (Minutes)") xscale(log) ///
+    xlab(1 "No Wait" 2.5 5 10 20 40 80) ///
+    ytit("Idle Time for Provider") ylab(1 "100%" .75 "75%" .5 "50%" .25 "25%" 0 "0%")
+
+    graph export "${git}/output/queue-3.png" , width(3000) replace
+
 // End
