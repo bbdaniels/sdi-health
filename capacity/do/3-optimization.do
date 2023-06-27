@@ -328,7 +328,7 @@ use "${git}/data/capacity-optimized.dta", clear
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
       xlab(, tl(0)) xtit("Provider Competence") ///
-      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
+      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14))
 
       graph save "${git}/output/f-optimization-1.gph" , replace
 
@@ -338,18 +338,19 @@ use "${git}/data/capacity-optimized.dta", clear
       (lpoly cap_hftype irt_hftype , lc(red) lw(thick) ) ///
       (scatter cap_hftype irt_hftype , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
       if irt_hftype > -2 & irt_hftype < 2 ///
-    , by(country , norescale c(1) legend(off) note(" ") title("Optimal") )  ///
+    , by(country , norescale c(1) legend(off) note(" ") title("Reallocated") )  ///
       subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
       ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
       xlab(, tl(0)) xtit("Provider Competence") ///
-      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) nodraw
+      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) 
 
       graph save "${git}/output/f-optimization-2.gph" , replace
 
     graph combine ///
       "${git}/output/f-optimization-1.gph" ///
-      "${git}/output/f-optimization-2.gph" ///
-      , r(1) ysize(8) imargin(1 1 -1 -1 )
+      "${git}/output/f-optimization-2.gph"
+
+      graph draw ,  ysize(7)
 
       graph export "${git}/output/f-optimization.png" , width(3000) replace
 
@@ -482,7 +483,6 @@ keep doctor irt_old country cap_old uid
 
 levelsof country, local(cs)
 
-
 foreach c in `cs' {
 
   preserve
@@ -504,7 +504,6 @@ foreach c in `cs' {
 }
 use `all' , clear
 save "${git}/output/optimize-doctors-basis.dta" , replace
--
 
 cap prog drop upskill
 prog def upskill
@@ -535,14 +534,36 @@ clear
 tempfile all
   save `all' , replace emptyok
 
-  qui forv f = 0.1(0.1)1 {
-    forv it = 1/10 {
+  qui forv f = 0(0.05)1 {
+    forv it = 1/50 {
       upskill `f'
       append using `all'
       save `all' , replace
     }
   }
+  save "${git}/output/optimize-doctors-done.dta" , replace
 
+  decode country, gen(cc)
+  levelsof cc, local(cs)
+  local graphs  ""
+  local legend ""
+  local x = 1
+  foreach c in `cs' {
+    local graphs `"`graphs' (scatter irt_new f if cc == "`c'" , mc(%10))"'
+    local graphs `"`graphs' (scatter irt_new f if cc == "`c'" & f == 0 , mlab(cc) m(none) mlabc(black) mlabpos(9))"'
+    // local legend `"`legend' `x' "`c'" "'
+    local ++x
+    local ++x
+  }
 
+  replace f = f*100
+  graph box irt_new ///
+  , over(f) noout ///
+    marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
+    inten(0) cwhi lines(lw(thin) lc(black)) box(1 , lc(black) lw(thin)) ///
+  by(cc, c(2) iyaxes yrescale note("") scale(0.7)) ysize(6) ///
+    ytit("Average Interaction Competence") note("")
+
+    graph export "${git}/output/f-docs-upskill.png" , width(3000) replace
 
 //

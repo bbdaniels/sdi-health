@@ -98,9 +98,9 @@ use "${git}/data/capacity.dta", clear
     (pci 0 `new' 25 `new' , yaxis(2) lc(black) lw(thick)) ///
     (pci 0 `old' 25 `old' , yaxis(2) lc(black) lw(thick) lp(dash)) ///
   ,  yscale(alt) yscale(alt  axis(2)) ytitle("Percentage of Providers (Histogram)" , axis(2)) ///
-    ytitle("Average Patients per Day") xtit("Vignettes Knowledge Score (Vertical Lines = Means)") ///
-    legend(on pos(12) order(3 "Original Assignment" 2 "Optimized by Country/Sector") size(small) region(lp(blank))) ///
-    xlab(-5(1)5) ylab(0 50 100 150 200 250) ylab(0(5)25 , axis(2))
+    ytitle("Average Patients per Day") xtit("Vignettes Competence (Vertical Lines = Means)") ///
+    legend(on pos(12) order(3 "Original Assignment" 2 "Reallocated by Country/Sector") size(small) region(lp(blank))) ///
+    xlab(-5(1)5) ylab(0 50 100 150 200 250 300) ylab(0(5)25 , axis(2))
 
     graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
 
