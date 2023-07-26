@@ -5,7 +5,7 @@
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
 
-  collapse (mean) hf_outpatient hf_staff_op ///
+  collapse (mean) hf_outpatient hf_staff_op (count) n = hf_outpatient  ///
       , by(country hf_id) fast
 
   replace hf_outpatient = hf_outpatient/(60)

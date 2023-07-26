@@ -320,40 +320,31 @@ use "${git}/data/capacity-optimized.dta", clear
 
     qui su cap_old , d
 
-    tw ///
-      (lpoly cap_old irt_old , lc(red) lw(thick) ) ///
-      (scatter cap_old irt_old , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-      if irt_old > -2 & irt_old < 2 ///
-    , by(country , norescale c(1) legend(off) note(" ") title("Actual") )  ///
-      subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
-      ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
-      xlab(, tl(0)) xtit("Provider Competence") ///
-      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14))
+    binsreg  cap_old irt_old if irt_old > -2 & irt_old < 2 ///
+      , polyreg(1) by(country) ysize(8) nbins(10) ///
+        xscale(noline) yscale(noline) xtit("Provider Competence") title("Actual") ytit("Daily Outpatient Caseload") ///
+        bysymbols(o o o o o o o o o o ) ///
+        legend(on pos(3) c(5) region(lc(none)) size(small) ///
+          order(1 "Kenya" 3 "Madagascar" 5 "Malawi" 7 "Mozambique" 9 "Niger" ///
+                11 "Nigeria" 13 "Sierra Leone" 15 "Tanzania" 17 "Togo" 19 "Uganda") )
 
       graph save "${git}/output/f-optimization-1.gph" , replace
 
-    qui su cap_old , d
+    binsreg  cap_hftype irt_hftype if irt_hftype > -2 & irt_hftype < 2 ///
+      , polyreg(3) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
+        xscale(noline) yscale(noline) xtit("Provider Competence") title("Reallocated") ytit("Daily Outpatient Caseload") ///
+        bysymbols(o o o o o o o o o o )
 
-    tw ///
-      (lpoly cap_hftype irt_hftype , lc(red) lw(thick) ) ///
-      (scatter cap_hftype irt_hftype , m(.) mc(black%10) msize(tiny) mlc(none) jitter(1)) ///
-      if irt_hftype > -2 & irt_hftype < 2 ///
-    , by(country , norescale c(1) legend(off) note(" ") title("Reallocated") )  ///
-      subtitle(,bc(none)) yscale(log noline) xscale(noline) ///
-      ylab(1 "0-1" 10 100 "100+" , tl(0))  ///
-      xlab(, tl(0)) xtit("Provider Competence") ///
-      yline(`r(p50)', lc(gs14)) xline(0 , lc(gs14)) 
 
       graph save "${git}/output/f-optimization-2.gph" , replace
 
-    graph combine ///
-      "${git}/output/f-optimization-1.gph" ///
-      "${git}/output/f-optimization-2.gph"
+      grc1leg ///
+        "${git}/output/f-optimization-1.gph" ///
+        "${git}/output/f-optimization-2.gph" , ycom
 
-      graph draw ,  ysize(7)
+        graph draw, ysize(6)
 
-      graph export "${git}/output/f-optimization.png" , width(3000) replace
-
+        graph export "${git}/output/f-optimization.png" , width(3000) replace
 
 // Calculate new quality
 use "${git}/data/capacity-optimized.dta", clear
