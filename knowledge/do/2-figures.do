@@ -128,18 +128,7 @@ use "${git}/data/knowledge.dta", clear
 use "${git}/data/knowledge.dta", clear
 
   expand 2 , gen(total)
-    replace country = " [HDI] Full Sample" if total == 1
-    replace country = "[143] " + country if country == "Kenya"
-    replace country = "[159] " + country if country == "Uganda"
-    replace country = "[175] " + country if country == "Guinea Bissau"
-    replace country = "[164] " + country if country == "Madagascar"
-    replace country = "[174] " + country if country == "Malawi"
-    replace country = "[181] " + country if country == "Mozambique"
-    replace country = "[189] " + country if country == "Niger"
-    replace country = "[161] " + country if country == "Nigeria"
-    replace country = "[182] " + country if country == "Sierra Leone"
-    replace country = "[163] " + country if country == "Tanzania"
-    replace country = "[167] " + country if country == "Togo"
+    replace country = "Full Sample" if total == 1
 
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
