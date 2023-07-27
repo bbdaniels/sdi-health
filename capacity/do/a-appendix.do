@@ -94,4 +94,31 @@ use "${git}/data/capacity.dta", clear
       lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red ))
 
     graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
+
+// Figure: Provider upskilling
+use "${git}/output/optimize-doctors-done.dta" , clear
+
+  decode country, gen(cc)
+  levelsof cc, local(cs)
+  local graphs  ""
+  local legend ""
+  local x = 1
+  foreach c in `cs' {
+    local graphs `"`graphs' (scatter irt_new f if cc == "`c'" , mc(%10))"'
+    local graphs `"`graphs' (scatter irt_new f if cc == "`c'" & f == 0 , mlab(cc) m(none) mlabc(black) mlabpos(9))"'
+    // local legend `"`legend' `x' "`c'" "'
+    local ++x
+    local ++x
+  }
+
+  replace f = f*100
+  graph box irt_new ///
+  , over(f) noout ///
+    marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
+    inten(0) cwhi lines(lw(thin) lc(black)) box(1 , lc(black) lw(thin)) ///
+  by(cc, c(2) iyaxes yrescale note("") scale(0.7)) ysize(6) ///
+    ytit("Average Interaction Competence") note("")
+
+    graph export "${git}/output/f-docs-upskill.png" , width(3000) replace
+    
 // End
