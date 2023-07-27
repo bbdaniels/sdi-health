@@ -252,14 +252,14 @@ foreach c in `cs' {
 
 }
 use `all' , clear
-save "${git}/output/optimize-doctors-basis.dta" , replace
+save "${git}/data/optimize-doctors-basis.dta" , replace
 
 cap prog drop upskill
 prog def upskill
 
 args frac
 
-    use "${git}/output/optimize-doctors-basis.dta" , clear
+    use "${git}/data/optimize-doctors-basis.dta" , clear
 
     gen r = runiform()
       replace r = 0 if doctor == 1
@@ -290,6 +290,6 @@ tempfile all
       save `all' , replace
     }
   }
-  save "${git}/output/optimize-doctors-done.dta" , replace
+  save "${git}/data/optimize-doctors-done.dta" , replace
 
 //

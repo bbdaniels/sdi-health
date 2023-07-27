@@ -52,7 +52,6 @@ use "${git}/data/capacity.dta", clear
   , replace first(var)
 
 // Figure. Descriptive statistics for facilities
-
 use "${git}/data/capacity.dta", clear
   drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
 
@@ -168,7 +167,6 @@ use "${git}/data/capacity-comparison.dta", clear
   append using "${git}/data/capacity-optimized.dta"
   egen correct = rowmean(treat?)
 
-
   tw (fpfitci correct irt_old ///
       if irt_old > -2 & irt_old < 2 , lc(black) fc(gray) alc(white%0)) ///
     (pcarrow irtCorrect irtKnowledge dmeanCorrect dmeanKnowledge ///
@@ -189,7 +187,6 @@ use "${git}/data/capacity-comparison.dta", clear
 
       graph export "${git}/output/f-optimization-supply.png" , width(3000) replace
 
-
 **************************************************
 // Figure: Vizualizations for sectoral restriction
 **************************************************
@@ -197,78 +194,31 @@ use "${git}/data/capacity-comparison.dta", clear
 // Create optimized allocation images
 use "${git}/data/capacity-optimized.dta", clear
 
-  // Graphs
+  binsreg  cap_old irt_old if irt_old > -2 & irt_old < 2 ///
+    , polyreg(1) by(country) ysize(8) nbins(10) ///
+      xscale(noline) yscale(noline) xtit("Provider Competence") title("Actual") ytit("Daily Outpatient Caseload") ///
+      bysymbols(o o o o o o o o o o ) bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red) ///
+      legend(on pos(3) c(5) region(lc(none)) size(small) ///
+        order(1 "Kenya" 3 "Madagascar" 5 "Malawi" 7 "Mozambique" 9 "Niger" ///
+              11 "Nigeria" 13 "Sierra Leone" 15 "Tanzania" 17 "Togo" 19 "Uganda") )
 
-    qui su cap_old , d
+    graph save "${git}/output/f-optimization-1.gph" , replace
 
-    binsreg  cap_old irt_old if irt_old > -2 & irt_old < 2 ///
-      , polyreg(1) by(country) ysize(8) nbins(10) ///
-        xscale(noline) yscale(noline) xtit("Provider Competence") title("Actual") ytit("Daily Outpatient Caseload") ///
-        bysymbols(o o o o o o o o o o ) bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red) ///
-        legend(on pos(3) c(5) region(lc(none)) size(small) ///
-          order(1 "Kenya" 3 "Madagascar" 5 "Malawi" 7 "Mozambique" 9 "Niger" ///
-                11 "Nigeria" 13 "Sierra Leone" 15 "Tanzania" 17 "Togo" 19 "Uganda") )
+  binsreg  cap_hftype irt_hftype if irt_hftype > -2 & irt_hftype < 2 ///
+    , polyreg(3) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
+      xscale(noline) yscale(noline) xtit("Provider Competence") title("Reallocated") ytit("Daily Outpatient Caseload") ///
+      bysymbols(o o o o o o o o o o )  bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red)
 
-      graph save "${git}/output/f-optimization-1.gph" , replace
+    graph save "${git}/output/f-optimization-2.gph" , replace
 
-    binsreg  cap_hftype irt_hftype if irt_hftype > -2 & irt_hftype < 2 ///
-      , polyreg(3) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
-        xscale(noline) yscale(noline) xtit("Provider Competence") title("Reallocated") ytit("Daily Outpatient Caseload") ///
-        bysymbols(o o o o o o o o o o )  bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red)
+  grc1leg ///
+    "${git}/output/f-optimization-1.gph" ///
+    "${git}/output/f-optimization-2.gph" , ycom
 
-      graph save "${git}/output/f-optimization-2.gph" , replace
+    graph draw, ysize(6)
 
-      grc1leg ///
-        "${git}/output/f-optimization-1.gph" ///
-        "${git}/output/f-optimization-2.gph" , ycom
+    graph export "${git}/output/f-optimization.png" , width(3000) replace
 
-        graph draw, ysize(6)
-
-        graph export "${git}/output/f-optimization.png" , width(3000) replace
-
-// Calculate new quality
-use "${git}/data/capacity-optimized.dta", clear
-tempfile all
-
-  preserve
-    collapse (mean) irt_old (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
-    save `all' , replace
-  restore
-
-  foreach type in unrest hftype levels rururb public {
-    preserve
-      collapse irt_`type' [aweight=cap_`type'] , by(country hf_type)
-      merge 1:1 country hf_type using `all' , nogen
-      save `all' , replace
-    restore
-  }
-
-  use `all' , clear
-
-  egen temp = sum(cap_old) , by(country)
-  gen n = cap_old/temp
-
-// Visualize sectoral changes
-
-  local style msize(small)
-  tw ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 4 , `style' mang(30) lc(red) mc(red)) ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 5 , `style' mang(60) lc(red) mc(red)) ///
-    (pcarrow irt_old n irt_hftype n if hf_type == 6 , `style' mang(90) lc(red) mc(red)) ///
-    if irt_old != irt_hftype ///
-  , by(country , r(2) rescale ixaxes note(" ")  ///
-       legend(ring(0) pos(12))) subtitle(,bc(none)) xsize(6) ///
-    xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
-    xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%") xscale(noline) ///
-    yline(0 , lc(black) lw(thin)) ylab(-2 "-2 SD" -1 "-1 SD" 1 "+1 SD" 2 "+2 SD" 3 "+3 SD" 0 "Mean") yscale(noline) ///
-    legend(size(small) symxsize(small) c(4) ///
-      order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
-            0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
-
-    graph export "${git}/output/f-optimize-differences.png" , width(3000) replace
 
 **************************************************
 // Figure: Meta-analytical comparison
@@ -278,7 +228,7 @@ use "${git}/data/capacity.dta", clear
   ren irt irt_new
   reg correct irt_new i.country
 
-use "${git}/output/optimize-doctors-done.dta" , clear
+use "${git}/data/optimize-doctors-done.dta" , clear
   keep if f == float(0.95)
   predict correct
   collapse (mean) effect_size = correct (p95) _meta_ciu = correct (p5) _meta_cil = correct , by(country)
@@ -313,47 +263,46 @@ use "${git}/data/capacity-comparison.dta" , clear
 
   append using "${git}/data/comparison.dta" , gen(sgroup)
 
- decode country, gen(temp)
-   replace CountryName = temp if temp !=""
- meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
+  decode country, gen(temp)
+    replace CountryName = temp if temp !=""
+  meta set effect_size _meta_cil _meta_ciu,  studylabel(CountryName) civartolerance(100)
 
- replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
+  replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
 
- replace region = "Africa" if WHO_Region2 == "AFRO"
- replace region = "Americas" if WHO_Region2 == "AMRO"
- replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
- replace region = "South Asia" if WHO_Region2 == "SEARO"
- replace region = "Western Pacific" if WHO_Region2 == "WPRO"
- drop if WHO_Region2 == "EURO"
+  replace region = "Africa" if WHO_Region2 == "AFRO"
+  replace region = "Americas" if WHO_Region2 == "AMRO"
+  replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
+  replace region = "South Asia" if WHO_Region2 == "SEARO"
+  replace region = "Western Pacific" if WHO_Region2 == "WPRO"
+  drop if WHO_Region2 == "EURO"
 
- replace Outcome_definition = strtrim(Outcome_definition)
- lab var Outcome_definition "Outcome"
- replace Outcome_definition = "Simulation: General Correct Management" if Outcome_definition == ""
+  replace Outcome_definition = strtrim(Outcome_definition)
+  lab var Outcome_definition "Outcome"
+  replace Outcome_definition = "Simulation: General Correct Management" if Outcome_definition == ""
 
- meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-   & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
- , subgroup(region) sort(effect_size) ///
-   nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
-   bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-   ciopts(lc(gs12) mstyle(none)) nooverall
+  meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
+    & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
+  , subgroup(region) sort(effect_size) ///
+    nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+    bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+    ciopts(lc(gs12) mstyle(none)) nooverall
 
 
    graph export "${git}/output/f-lit-1.png" , replace
 
- meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-   & !(region == " SDI Study" | region == "Africa") ///
- , subgroup(region) sort(effect_size) ///
-   nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
-   bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
-   ciopts(lc(gs12) mstyle(none)) nooverall
+  meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
+    & !(region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
+  , subgroup(region) sort(effect_size) ///
+    nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
+    bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+    ciopts(lc(gs12) mstyle(none)) nooverall
 
-   graph export "${git}/output/f-lit-2.png" , replace
+    graph export "${git}/output/f-lit-2.png" , replace
 
+  // Save for comparison
 
-// Save for comparison
-
-gen check = 1
-replace effect_size=effect_size*100
-save "${git}/output/optimize-comparison.dta" , replace
+  gen check = 1
+  replace effect_size=effect_size*100
+  save "${git}/data/optimize-comparison.dta" , replace
 
 // End

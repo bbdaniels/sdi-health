@@ -95,6 +95,50 @@ use "${git}/data/capacity.dta", clear
 
     graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
 
+// Calculate new quality
+use "${git}/data/capacity-optimized.dta", clear
+tempfile all
+
+  preserve
+    collapse (mean) irt_old (rawsum) cap_old [aweight=cap_old] , by(country hf_type)
+    save `all' , replace
+  restore
+
+  foreach type in unrest hftype levels rururb public {
+    preserve
+      collapse irt_`type' [aweight=cap_`type'] , by(country hf_type)
+      merge 1:1 country hf_type using `all' , nogen
+      save `all' , replace
+    restore
+  }
+
+  use `all' , clear
+
+  egen temp = sum(cap_old) , by(country)
+  gen n = cap_old/temp
+
+  // Visualize sectoral changes
+
+  local style msize(small)
+  tw ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 1 , `style' mang(30) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 2 , `style' mang(60) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 3 , `style' mang(90) lc(black) mc(black)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 4 , `style' mang(30) lc(red) mc(red)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 5 , `style' mang(60) lc(red) mc(red)) ///
+    (pcarrow irt_old n irt_hftype n if hf_type == 6 , `style' mang(90) lc(red) mc(red)) ///
+    if irt_old != irt_hftype ///
+  , by(country , r(2) rescale ixaxes note(" ")  ///
+       legend(ring(0) pos(12))) subtitle(,bc(none)) xsize(6) ///
+    xtit("National Share of Outpatients") ytit("Average Provider Competence") ///
+    xlab(0 "0%" .25 "25%" .5 "50%" .75 "75%") xscale(noline) ///
+    yline(0 , lc(black) lw(thin)) ylab(-2 "-2 SD" -1 "-1 SD" 1 "+1 SD" 2 "+2 SD" 3 "+3 SD" 0 "Mean") yscale(noline) ///
+    legend(size(small) symxsize(small) c(4) ///
+      order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
+            0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
+
+    graph export "${git}/output/f-optimize-differences.png" , width(3000) replace
+
 // Figure: Provider upskilling
 use "${git}/output/optimize-doctors-done.dta" , clear
 
@@ -120,5 +164,5 @@ use "${git}/output/optimize-doctors-done.dta" , clear
     ytit("Average Interaction Competence") note("")
 
     graph export "${git}/output/f-docs-upskill.png" , width(3000) replace
-    
+
 // End
