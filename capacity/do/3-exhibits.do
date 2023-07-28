@@ -41,13 +41,25 @@ use "${git}/data/capacity.dta", clear
 // Tables of comparative statistics
   use "${git}/data/capacity-comparison.dta" , replace
 
+  foreach var in irt smean dmean {
+    preserve
+    use "${git}/data/capacity.dta", clear
+      egen correct = rowmean(treat?)
+      ren irt `var'
+      reg correct `var' i.country
+    restore
+    predict `var'_c
+  }
+    gen sdifc = smean_c - irt_c if x == "Knowledge"
+    gen ddifc = dmean_c - irt_c if x == "Knowledge"
+
   export excel country x ///
-    irt smean sdif irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
+    irt smean sdif sdifc irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
     using "${git}/output/t-optimize-quality.xlsx" ///
   , replace first(var)
 
   export excel country x ///
-    irt dmean ddif irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
+    irt dmean ddif ddifc irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50 ///
     using "${git}/output/t-optimize-quality-d.xlsx" ///
   , replace first(var)
 
@@ -82,7 +94,7 @@ use "${git}/data/capacity.dta", clear
     graph save "${git}/temp/pro.gph" , replace
 
   graph combine "${git}/temp/fac.gph" "${git}/temp/pro.gph"  , ysize(6) c(1) imargin(none)
-    graph export "${git}/output/f-descriptives.png" , width(3000) replace
+    graph export "${git}/output/f-descriptives.pdf" , replace
 
 // Cumulative Capacity
 use "${git}/data/capacity.dta", clear
@@ -113,7 +125,7 @@ use "${git}/data/capacity.dta", clear
       order(1 "Kenya" 2 "Madagascar" 3 "Malawi" 4 "Mozambique" 5 "Niger" ///
             6 "Nigeria" 7 "Sierra Leone" 8 "Tanzania" 9 "Togo" 10 "Uganda"))
 
-      graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
+      graph export "${git}/output/f-capacity-staff.pdf" , replace
 
 // Setup: Current comparator for optimization
 use "${git}/data/capacity.dta", clear
@@ -152,7 +164,7 @@ use "${git}/data/capacity.dta", clear
     legend(on pos(12) order(3 "Original Assignment" 2 "Reallocated by Country/Sector") size(small) region(lp(blank))) ///
     xlab(-5(1)5) ylab(0 50 100 150 200 250 300) ylab(0(5)25 , axis(2))
 
-    graph export "${git}/output/f-optimize-providers.png" , width(3000) replace
+    graph export "${git}/output/f-optimize-providers.pdf" , replace
 
 **************************************************
 // Figure: Vizualizations for correctness
@@ -175,7 +187,7 @@ use "${git}/data/capacity-comparison.dta", clear
       xtit("Average Interaction Competence Before and After Reallocation") ///
       legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
 
-      graph export "${git}/output/f-optimization-demand.png" , width(3000) replace
+      graph export "${git}/output/f-optimization-demand.pdf" , replace
 
   tw (fpfitci correct irt_old ///
       if irt_old > -2 & irt_old < 3 , lc(black) fc(gray) alc(white%0)) ///
@@ -185,7 +197,7 @@ use "${git}/data/capacity-comparison.dta", clear
       xtit("Average Interaction Competence Before and After Reallocation") ///
       legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
 
-      graph export "${git}/output/f-optimization-supply.png" , width(3000) replace
+      graph export "${git}/output/f-optimization-supply.pdf" , replace
 
 **************************************************
 // Figure: Vizualizations for sectoral restriction
@@ -217,7 +229,7 @@ use "${git}/data/capacity-optimized.dta", clear
 
     graph draw, ysize(6)
 
-    graph export "${git}/output/f-optimization.png" , width(3000) replace
+    graph export "${git}/output/f-optimization.pdf" , replace
 
 
 **************************************************
@@ -238,22 +250,33 @@ use "${git}/data/optimize-doctors-done.dta" , clear
 
 use "${git}/data/capacity-comparison.dta" , clear
 
-  keep if x == "Correct"
+  keep if x == "Knowledge"
   gen region = "  Average Across Reallocation Simulations"
-  ren irt irt_old
 
-  egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
-  egen _meta_cil= rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest irt_biggco irt_biggse irt_bigg20 irt_bigg30 irt_bigg40 irt_bigg50)
-  clonevar effect_size = mean
+  egen _meta_ciu = rowmax(irt_public irt_rururb irt_levels irt_hftype irt_unrest)
+  egen _meta_cil = rowmin(irt_public irt_rururb irt_levels irt_hftype irt_unrest)
+
+  foreach var in irt smean _meta_ciu _meta_cil  {
+    preserve
+    use "${git}/data/capacity.dta", clear
+      egen correct = rowmean(treat?)
+      ren irt `var'
+      reg correct `var' i.country
+    restore
+    predict `var'_c
+  }
+    gen effect_size = smean_c if x == "Knowledge"
+    replace _meta_ciu = _meta_ciu_c
+    replace _meta_cil = _meta_cil_c
 
   append using `docs'
-    bys country : egen temp = min(irt_old)
-    replace irt_old = temp if irt_old == .
+    bys country : egen temp = min(irt_c)
+    replace irt_c = temp if irt_c == .
     drop temp
 
-  replace _meta_ciu = _meta_ciu - irt_old
-  replace _meta_cil = _meta_cil - irt_old
-  replace effect_size = effect_size - irt_old
+  replace _meta_ciu = _meta_ciu - irt_c
+  replace _meta_cil = _meta_cil - irt_c
+  replace effect_size = effect_size - irt_c
 
   replace _meta_ciu = _meta_ciu * 100
   replace _meta_cil = _meta_cil * 100
@@ -278,17 +301,16 @@ use "${git}/data/capacity-comparison.dta" , clear
 
   replace Outcome_definition = strtrim(Outcome_definition)
   lab var Outcome_definition "Outcome"
-  replace Outcome_definition = "Simulation: General Correct Management" if Outcome_definition == ""
+  replace Outcome_definition = "Simulation Predicted Increase in General Correct Management" if Outcome_definition == ""
 
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
     & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
-  , subgroup(region) sort(effect_size) ///
+  , subgroup(region) sort(CountryName) ///
     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-
-   graph export "${git}/output/f-lit-1.png" , replace
+   graph export "${git}/output/f-lit-1.pdf" , replace
 
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
     & !(region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
@@ -297,7 +319,7 @@ use "${git}/data/capacity-comparison.dta" , clear
     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-    graph export "${git}/output/f-lit-2.png" , replace
+    graph export "${git}/output/f-lit-2.pdf" , replace
 
   // Save for comparison
 
