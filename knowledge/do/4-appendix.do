@@ -31,7 +31,7 @@ use "${git}/data/knowledge.dta", clear
     }
 
      graph combine `graphs' , c(2) ysize(5)
-       graph export "${git}/outputs/f-irt-condition.png", replace
+       graph export "${git}/appendix/f-irt-condition.png", replace
 
 // Figure. Weight
 use "${git}/data/knowledge.dta", clear
@@ -87,7 +87,7 @@ use "${git}/data/knowledge.dta", clear
           "${git}/temp/validation-2.gph" ///
           , c(1) ysize(5)
 
-          graph export "${git}/outputs/f-validation-pca.png", replace
+          graph export "${git}/appendix/f-validation-pca.png", replace
 
 
 // Figure. Quantile distributions by education
@@ -133,6 +133,6 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/blank.gph"  ///
   , xcom c(1) ysize(7) imargin(zero)
 
-    graph export "${git}/outputs/f-education.png", replace width(2000)
+    graph export "${git}/appendix/f-education.png", replace width(2000)
 
 // End

@@ -1,10 +1,6 @@
-
-
 // Appendix portion
-use "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/SDI WBG/SDI/SDI Import/data/analysis/dta/irt_output_items.dta" ///
+use "${irt}/irt_output_items.dta" , clear
   , clear
-
-global ex "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/SDI Knowledge/outputs/ax"
 
 sort b_pv1
 gen condition = upper(substr(varname,1,strpos(varname,"_")-1))
@@ -18,7 +14,7 @@ lab var c_pv1 "Guess Rate"
 
 foreach co in `conditions' {
   export excel condition label b_pv1 a_pv1 c_pv1 ///
-    using "${ex}/irt.xlsx" ///
+    using "${git}/appendix/irt.xlsx" ///
     if condition == "`co'" & strpos(label,"Physical"), first(varl) sheet("`co'_P") sheetreplace
 
   preserve
@@ -37,7 +33,7 @@ foreach co in `conditions' {
       xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${ex}/p_irt_`co'.png" , replace
+      graph export "${git}/appendix/p_irt_`co'.png" , replace
 }
 
 foreach co in `conditions' {
@@ -62,7 +58,7 @@ if "`co'" != "RESP" {
       xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${ex}/q_irt_`co'.png" , replace
+      graph export "${git}/appendix/q_irt_`co'.png" , replace
 }
 }
 
@@ -73,4 +69,4 @@ if "`co'" != "RESP" {
     ytit("IRT Item Discrimination (Maximum Score Separation Rate)",size(small)) ///
     legend(on ring(0) c(1) pos(11) order(1 "History Questions" 2 "Physical Examinations"))
 
-    graph export "${ex}/irt.png" , replace
+    graph export "${git}/appendix/irt.png" , replace

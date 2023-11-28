@@ -2,6 +2,7 @@
 
 
 global box "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/SDI Knowledge/"
+global irt "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/_Archive/SDI WBG/SDI/SDI Import/data/analysis/dta/"
 global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 
 // Installs etc

@@ -16,6 +16,15 @@
 
  *************************************************************************/
 
+// Condition wise IRC
+
+  use "${irt}/irt_output_items.dta" , clear
+
+  gen condition = lower(substr(varname,1,strpos(varname,"_")-1))
+  collapse (mean) a_pv1 b_pv1 c_pv1 , by(condition)
+
+  iecodebook export using "${git}/data/irc.xlsx" ///
+    , replace save sign verify
 
 /*****************************
       Vignettes
