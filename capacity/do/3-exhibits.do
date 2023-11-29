@@ -214,18 +214,18 @@ use "${git}/data/capacity-optimized.dta", clear
         order(1 "Kenya" 3 "Madagascar" 5 "Malawi" 7 "Mozambique" 9 "Niger" ///
               11 "Nigeria" 13 "Sierra Leone" 15 "Tanzania" 17 "Togo" 19 "Uganda") )
 
-    graph save "${git}/output/f-optimization-1.gph" , replace
+    graph save "${git}/temp/f-optimization-1.gph" , replace
 
   binsreg  cap_hftype irt_hftype if irt_hftype > -2 & irt_hftype < 2 ///
     , polyreg(3) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
       xscale(noline) yscale(noline) xtit("Provider Competence") title("Reallocated") ytit("Daily Outpatient Caseload") ///
       bysymbols(o o o o o o o o o o )  bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red)
 
-    graph save "${git}/output/f-optimization-2.gph" , replace
+    graph save "${git}/temp/f-optimization-2.gph" , replace
 
   grc1leg ///
-    "${git}/output/f-optimization-1.gph" ///
-    "${git}/output/f-optimization-2.gph" , ycom
+    "${git}/temp/f-optimization-1.gph" ///
+    "${git}/temp/f-optimization-2.gph" , ycom
 
     graph draw, ysize(6)
 
@@ -292,7 +292,7 @@ use "${git}/data/capacity-comparison.dta" , clear
 
   replace CountryName = "Tanzania" if strpos(CountryName,"Tanzania")
 
-  replace region = "Africa" if WHO_Region2 == "AFRO"
+  replace region = "African RCTs with Comparable (%) Outcomes" if WHO_Region2 == "AFRO"
   replace region = "Americas" if WHO_Region2 == "AMRO"
   replace region = "Eastern Mediterranean" if WHO_Region2 == "EMRO"
   replace region = "South Asia" if WHO_Region2 == "SEARO"
@@ -303,14 +303,39 @@ use "${git}/data/capacity-comparison.dta" , clear
   lab var Outcome_definition "Outcome"
   replace Outcome_definition = "Simulation Predicted Increase in General Correct Management" if Outcome_definition == ""
 
+  replace Outcome_definition = "Correct Drug" if studyid == 1000001
+  replace Outcome_definition = "Inhaled Corticosteroid" if studyid == 1900001
+  replace Outcome_definition = "SPs with Correct Treatment" if studyid == 5100001
+  replace Outcome_definition = "Diarrhea Patients Treated by STGs" if studyid == 17190101
+  replace Outcome_definition = "Patients Given Correct Chloroquine Dose" if studyid == 17300001
+  replace Outcome_definition = "Consultations Where HCP Gives First Dose to Child" if studyid == 27600001
+  replace Outcome_definition = "URI Prescriptions with No Drugs" if studyid == 67200001
+  replace Outcome_definition = "Patients Managed per Standing Orders" if studyid == 144200001
+  replace Outcome_definition = "Injections Appropriate" if studyid == 149300001
+  replace Outcome_definition = "Medications With Dose Stated" if studyid == 149600001
+  replace Outcome_definition = "Medications With Amodiaquine" if studyid == 205400001
+  replace Outcome_definition = "ORS and Zinc for Uncomplicated Diarrhea" if studyid == 258300001
+  replace Outcome_definition = "Appropriate Follow-Ups for Injectable Contraceptives" if studyid == 258900001
+  replace Outcome_definition = "Patients With HCP Observing First Dose" if studyid == 261500001
+  replace Outcome_definition = "Correctly Treated Malaria" if studyid == 274300001
+  replace Outcome_definition = "Malaria-Negative Patients With Artemether-Lumefantrine" if studyid == 275200001
+  replace Outcome_definition = "Carer Reported Correct Child Care for Fever/Diarrhea/Pneumonia" if studyid == 279400001
+  replace Outcome_definition = "Non-Menstruating Patients Denied Contraceptives" if studyid == 279500001
+  replace Outcome_definition = "HIV-Positive Pregnant Women Receiving ARVs" if studyid == 286500001
+  replace Outcome_definition = "SPs with Correct Artemether-Lumefantrine Treatment" if studyid == 287400001
+  replace Outcome_definition = "Patients Prescribed Co-trimoxazole Prophylaxis" if studyid == 289600001
+  replace Outcome_definition = "Patients Prescribed Antimalarials" if studyid == 291100001
+  replace Outcome_definition = "Patients Prescribed Antibiotics or Antimalarials" if studyid == 296600001
+  replace Outcome_definition = "Prescriptions with Injection" if studyid == 298000001
+
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-    & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
+    & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "African RCTs with Comparable (%) Outcomes") ///
   , subgroup(region) sort(CountryName) ///
     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
-    bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
+    bodyopts(size(large)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-   graph export "${git}/output/f-lit-1.pdf" , replace
+   graph export "${git}/output/f-lit-review.pdf" , replace
 
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
     & !(region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
@@ -319,7 +344,7 @@ use "${git}/data/capacity-comparison.dta" , clear
     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-    graph export "${git}/output/f-lit-2.pdf" , replace
+    graph export "${git}/appendix/f-lit-2.pdf" , replace
 
   // Save for comparison
 

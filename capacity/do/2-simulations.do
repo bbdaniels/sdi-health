@@ -283,6 +283,7 @@ clear
 tempfile all
   save `all' , replace emptyok
 
+  set seed 943750
   qui forv f = 0(0.05)1 {
     forv it = 1/50 {
       upskill `f'
