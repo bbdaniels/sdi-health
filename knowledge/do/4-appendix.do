@@ -1,6 +1,5 @@
 // Figure: IRT by conditions
 
-use "${git}/data/knowledge.dta", clear
 
   local diarrhea_title "Child Diarrhea + Dehydration"
   local pneumonia_title "Child Pneumonia"
@@ -11,18 +10,29 @@ use "${git}/data/knowledge.dta", clear
   local pregnant_title "Neonatal Asphyxia"
 
   qui foreach var in ///
-    diarrhea pneumonia diabetes tb malaria pph pregnant {
+    diarrhea pneumonia diabetes tb malaria pph {
 
+      use "${git}/data/irc.dta" , clear
+      keep if condition == "`var'"
+      local a = a_pv1[1]
+      local b = b_pv1[1]
+      local c = c_pv1[1]
+
+      use "${git}/data/knowledge.dta", clear
       egen `var' = rowmean(`var'_history*)
+      xtile `var'_p = theta_mle , n(20)
+      drop if `var' == .
 
-      * local title :  var lab `var'
+      collapse (mean)  `var' theta_mle , by(`var'_p)
+
       local graphs `"`graphs' "\``var''"  "'
       local title ``var'_title'
       tempfile `var'
 
-      binsreg `var' theta_mle , polyreg(10) ///
-        dotsplotopt(mc(black)) polyregplotopt(lc(red) lw(thick)) ///
-        ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
+      tw (function `c'+(1-`c')*((exp(`a'*(x-(`b'))))/(1+(exp(`a'*(x-(`b')))))) ///
+            , range(-4 4) lc(red) lw(thick)) ///
+          (scatter `var' theta_mle , msize(medium) m(Oh) mlc(black) mlw(thin)) ///
+      ,  ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
         yscale(noline) xscale(noline) ytit(" ") title("{bf:`title'} (All Items)" , size(small)) ///
         xlab(0 "" 5 "+5" -5 "-5" -1 " " -2 " " -3 " " -4 " " 1 " " 2 " " 3 " " 4 " ") ///
           note("Provider competence score {&rarr}") xtit("") ///
