@@ -1,6 +1,5 @@
 // Appendix portion
-use "${irt}/irt_output_items.dta" , clear
-  , clear
+use "${git}/data/irt-items.dta" , clear
 
 sort b_pv1
 gen condition = upper(substr(varname,1,strpos(varname,"_")-1))
@@ -39,7 +38,7 @@ foreach co in `conditions' {
 foreach co in `conditions' {
 if "`co'" != "RESP" {
   export excel condition label b_pv1 a_pv1 c_pv1 ///
-    using "${ex}/irt.xlsx" ///
+    using "${git}/appendix/irt.xlsx" ///
     if condition == "`co'" & strpos(label,"History"), first(varl) sheet("`co'_Q") sheetreplace
 
   preserve

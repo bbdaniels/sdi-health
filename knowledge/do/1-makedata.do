@@ -18,7 +18,10 @@
 
 // Condition wise IRC
 
-  use "${irt}/irt_output_items.dta" , clear
+  use "${git}/raw/irt_output_items.dta" , clear
+
+  iecodebook export using "${git}/data/irt-items.xlsx" ///
+    , replace save sign verify
 
   gen condition = lower(substr(varname,1,strpos(varname,"_")-1))
   collapse (mean) a_pv1 b_pv1 c_pv1 , by(condition)
@@ -31,7 +34,7 @@
 ******************************/
 
   *Open vignettes dataset
-  use "${box}/data/Vignettes_pl.dta", clear
+  use "${git}/raw/vignettes.dta", clear
 
   *Drop Kenya 2012
   drop if cy ==  "KEN_2012"
