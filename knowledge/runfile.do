@@ -12,7 +12,7 @@ cap ssc install vioplot
 cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/binsreg/master/stata/")
 
 // Copy in raw data -- comment out in final package
-
+/*
   iecodebook export "${irt}/irt_output_items.dta" ///
     using "${git}/raw/irt_output_items.xlsx" ///
     , replace save sign verify
@@ -20,7 +20,7 @@ cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/bin
   iecodebook export "${box}/data/Vignettes_pl.dta" ///
     using "${git}/raw/vignettes.xlsx" ///
     , replace save sign verify
-
+*/
 // Run all code (with flags)
 
   if 1 qui do "${git}/do/1-makedata.do"
