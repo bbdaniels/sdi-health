@@ -13,7 +13,7 @@ use "${git}/data/capacity.dta", clear
     box(1 , lc(black) lw(thick)) box(2 , lc(red) lw(thick)) ///
     legend(on order(1 "Unadjusted" 2 "Absenteeism-Adjusted"))
 
-    graph export "${git}/output/af-absenteeism.png" , width(3000) replace
+    graph export "${git}/appendix/af-absenteeism.png" , width(3000) replace
 
 
 // Figure. Caseload by facility
@@ -35,7 +35,7 @@ use "${git}/data/capacity.dta", clear
   }
   graph combine `graphs' , c(2) ysize(5) imargin(none)
 
-  graph export "${git}/output/af-caseload.png" , width(3000) replace
+  graph export "${git}/appendix/af-caseload.png" , width(3000) replace
 
 // Figure. Descriptive statistics for facilities by sector
 
@@ -61,39 +61,7 @@ use "${git}/data/capacity.dta", clear
     marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
     ytit(" ") inten(0) cwhi lines(lw(thin) lc(black)) note(" ")
 
-  graph export "${git}/output/af-descriptives.png" , width(3000) replace
-
-// Figure. Daily caseload per provider, by facility sector and size
-use "${git}/data/capacity.dta", clear
-
-  duplicates drop country hf_id , force
-  drop if hf_outpatient == . | hf_outpatient == 0 | hf_staff_op == 0
-
-  gen hf_outpatient_day = hf_outpatient/60
-  gen hf_inpatient_day = hf_inpatient/60
-  clonevar cap_old = hf_outpatient_day
-  clonevar theta_mle = irt
-  gen check = hf_outpatient_day/hf_staff_op
-
-  replace check = 1 if check < 1
-  replace check = 160 if check > 160
-
-  levelsof country_string , local(l)
-  local x = 0
-    foreach level in `l' {
-      local ++x
-      local legend `"`legend' `x' "`level'" "'
-    }
-
-  cdfplot check if check > 0 ///
-  , by(country_string) xlog xscale(log) xlab(1 2.5 5 10 20 40 80 160, labgap(2) labsize(small) notick) ///
-    legend(on c(1) pos(3) size(small) symxsize(small) order(`legend') region(lp(blank))) xscale(noline ) yscale(noline ) ///
-    ylab(0 "100%" .25 "75%" .5 "50%" .75 "25%" 1 "0%" , notick) yline(0 .25 .5 .75 1 , lc(gs14) lw(thin)) ///
-    ytit("Share of providers who see at least...") xtit("... X patients per day {&rarr}" , placement(w)) xline(1 2.5 5 10 20 40 80 160 , lc(gs14) lw(thin)) ///
-    opt1( yscale(reverse)  ///
-      lc(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red ))
-
-    graph export "${git}/output/f-capacity-staff.png" , width(3000) replace
+  graph export "${git}/appendix/af-descriptives.png" , width(3000) replace
 
 // Calculate new quality
 use "${git}/data/capacity-optimized.dta", clear
@@ -137,7 +105,7 @@ tempfile all
       order(0 "Rural:" 1 "Hospital" 2 "Clinic" 3 "Health Post" ///
             0 "Urban:" 4 "Hospital" 5 "Clinic" 6 "Health Post" ))
 
-    graph export "${git}/output/f-optimize-differences.png" , width(3000) replace
+    graph export "${git}/appendix/af-optimize-differences.png" , width(3000) replace
 
 // Figure: Provider upskilling
 use "${git}/data/optimize-doctors-done.dta" , clear
@@ -150,6 +118,6 @@ use "${git}/data/optimize-doctors-done.dta" , clear
   by(cc, c(2) iyaxes yrescale note("") scale(0.7)) ysize(6) ///
     ytit("Average Interaction Competence") note("")
 
-    graph export "${git}/output/f-docs-upskill.pdf" , replace
+    graph export "${git}/appendix/af-docs-upskill.pdf" , replace
 
 // End

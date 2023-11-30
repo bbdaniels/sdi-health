@@ -98,19 +98,19 @@ foreach seed in 969264 089365 739579 8029288 {
         xtit("Idle Share: `idle' | Mean Wait: `wait' Min.") xlab(0 "Hours {&rarr}" 1 2 3 4 5 6 "Close") xoverhang ///
         legend(on order(3 "No Patients" 2 "Serving Patients" 1 "Patients Waiting") r(1)  pos(12) ring(1) symxsize(small))
 
-       graph save "${git}/output/queue-`x'.gph" , replace
+       graph save "${git}/temp/queue-`x'.gph" , replace
        local ++x
 }
 
 grc1leg ///
-"${git}/output/queue-1.gph" ///
-"${git}/output/queue-2.gph" ///
-"${git}/output/queue-3.gph" ///
-"${git}/output/queue-4.gph" ///
+"${git}/temp/queue-1.gph" ///
+"${git}/temp/queue-2.gph" ///
+"${git}/temp/queue-3.gph" ///
+"${git}/temp/queue-4.gph" ///
  , altshrink
 
  graph draw, ysize(6)
- graph export "${git}/output/queue-1.png" , width(3000) replace
+ graph export "${git}/appendix/queue-1.png" , width(3000) replace
 
 local x = 1
 set seed 123396
@@ -129,19 +129,19 @@ foreach pats in 15 20 30 40 {
        xtit("Patients/Day: `pats' | Idle Share: `idle' | Mean Wait: `wait' Min.") xlab(0 "Hours {&rarr}" 1 2 3 4 5 6 "Close") xoverhang ///
        legend(on order(3 "No Patients" 2 "Serving Patients" 1 "Patients Waiting") r(1)  pos(12) ring(1) symxsize(small))
 
-      graph save "${git}/output/queue-`x'.gph" , replace
+      graph save "${git}/temp/queue-`x'.gph" , replace
       local ++x
 }
 
 grc1leg ///
-"${git}/output/queue-1.gph" ///
-"${git}/output/queue-2.gph" ///
-"${git}/output/queue-3.gph" ///
-"${git}/output/queue-4.gph" ///
+"${git}/temp/queue-1.gph" ///
+"${git}/temp/queue-2.gph" ///
+"${git}/temp/queue-3.gph" ///
+"${git}/temp/queue-4.gph" ///
 , altshrink
 
 graph draw, ysize(6)
-graph export "${git}/output/queue-2.png" , width(3000) replace
+graph export "${git}/appendix/queue-2.png" , width(3000) replace
 
 
 clear
@@ -174,6 +174,6 @@ foreach pats in  15 20 30 40 {
     xlab(1 "No Wait" 2.5 5 10 20 40 80) ///
     ytit("Idle Time for Provider") ylab(1 "100%" .75 "75%" .5 "50%" .25 "25%" 0 "0%")
 
-    graph export "${git}/output/queue-3.png" , width(3000) replace
+    graph export "${git}/appendix/queue-3.png" , width(3000) replace
 
 // End

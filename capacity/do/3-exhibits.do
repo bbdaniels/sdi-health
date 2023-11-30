@@ -207,7 +207,7 @@ use "${git}/data/capacity-comparison.dta", clear
 use "${git}/data/capacity-optimized.dta", clear
 
   binsreg  cap_old irt_old if irt_old > -2 & irt_old < 2 ///
-    , polyreg(1) by(country) ysize(8) nbins(10) ///
+    , polyreg(2) by(country) ysize(8) nbins(10) ///
       xscale(noline) yscale(noline) xtit("Provider Competence") title("Actual") ytit("Daily Outpatient Caseload") ///
       bysymbols(o o o o o o o o o o ) bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red) ///
       legend(on pos(3) c(5) region(lc(none)) size(small) ///
@@ -217,7 +217,7 @@ use "${git}/data/capacity-optimized.dta", clear
     graph save "${git}/temp/f-optimization-1.gph" , replace
 
   binsreg  cap_hftype irt_hftype if irt_hftype > -2 & irt_hftype < 2 ///
-    , polyreg(3) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
+    , polyreg(2) by(country) legend(on pos(3) c(1)) ysize(8) nbins(10) ///
       xscale(noline) yscale(noline) xtit("Provider Competence") title("Reallocated") ytit("Daily Outpatient Caseload") ///
       bysymbols(o o o o o o o o o o )  bycolors(blue cranberry cyan dkgreen dkorange emerald gold lavender magenta maroon navy red)
 

@@ -14,7 +14,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 
   iecodebook export "${box}/comparison.dta" ///
     using "${git}/raw/comparison.xlsx" ///
-    , replace save sign reset
+    , replace save sign verify
 
   copy "${box}/All_countries_harm.dta" ///
      "${git}/raw/vignettes.dta" ///
@@ -22,11 +22,11 @@ global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 
   iecodebook export "${box}/All_countries_pl.dta" ///
     using "${git}/raw/vignettes-provider.xlsx" ///
-    , replace save sign reset
+    , replace save sign verify
 
   iecodebook export "${box}/IRT_parameters.dta" ///
     using "${git}/raw/irt-parameters.xlsx" ///
-    , replace save sign reset
+    , replace save sign verify
 
   copy "${box}/provider-codebook.xlsx" ///
     "${git}/raw/provider-codebook.xlsx" , replace
@@ -34,7 +34,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 // Run all code (with flags)
 
   if 1 qui do "${git}/do/1-makedata.do"
-  if 1 qui do "${git}/do/2-simulations.do"
+  if 0 qui do "${git}/do/2-simulations.do"
   if 1 qui do "${git}/do/3-exhibits.do"
   if 1 qui do "${git}/do/4-queueing.do"
   if 1 qui do "${git}/do/5-robustness.do"
