@@ -51,11 +51,21 @@ use "${git}/data/capacity.dta", clear
     predict `var'_c
   }
     gen sdifc = smean_c - irt_c if x == "Knowledge"
+      bys country: egen temp = mean(sdifc)
+      replace sdifc = temp
+      drop temp
+      replace sdifc = . if x == "Knowledge"
     gen ddifc = dmean_c - irt_c if x == "Knowledge"
+      bys country: egen temp = mean(ddifc)
+      replace ddifc = temp
+      drop temp
+      replace ddifc = . if x == "Knowledge"
+
+  gsort -x country
 
   export excel country x ///
     irt smean sdif sdifc irt_unrest irt_cadres irt_public irt_levels irt_rururb irt_hftype ///
-    using "${git}/output/t-optimize-quality.xlsx" ///
+    using "${git}/output/t-optimize-quality-s.xlsx" ///
   , replace first(var)
 
   export excel country x ///
@@ -141,7 +151,8 @@ use "${git}/data/capacity.dta", clear
   keep theta_mle check country hf_type weight
 
   mean theta_mle [pweight=check*weight]
-    local old = r(table)[1,1]
+    mat a = r(table)
+    local old = a[1,1]
 
   bys country hf_type (theta_mle): gen srno = _n
     tempfile irtrank
@@ -152,7 +163,8 @@ use "${git}/data/capacity.dta", clear
     merge 1:1 country hf_type srno using `irtrank'
 
   mean theta_mle [pweight=check*weight]
-   local new = r(table)[1,1]
+   mat a = r(table)
+   local new = a[1,1]
 
   tw (histogram theta_mle , w(0.5) start(-5) gap(10) lw(none) fc(gs12) yaxis(2) percent) ///
     (fpfit check theta_mle [pweight=weight], lc(black) lw(thick)) ///

@@ -83,6 +83,7 @@ use "${git}/data/capacity.dta", clear
 
   gen hf_outpatient_day = hf_outpatient/60
   clonevar cap_old = hf_outpatient_day
+  clonevar cap = hf_outpatient_day
   clonevar irt_old = irt
   tempfile irt
 
@@ -109,6 +110,6 @@ use "${git}/data/capacity.dta", clear
     collapse irt_unrest [pweight = inp_day], by(country)
     merge 1:1 country using `irt' , nogen
 
-    export excel using "${git}/appendix/af-inpatients.xlsx" , replace 
+    export excel using "${git}/appendix/af-inpatients.xlsx" , replace
 
 // Now we know

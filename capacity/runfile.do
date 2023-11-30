@@ -5,7 +5,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 
 // Installs for user-written packages
 
-  qui do "${git}/do/labelcollapse.ado"
+  * qui do "${git}/do/labelcollapse.ado"
   cap ssc install cdfplot , replace
   cap net install grc1leg , from("http://www.stata.com/users/vwiggins/") replace
   cap ssc install iefieldkit , replace
@@ -26,7 +26,7 @@ global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 
   iecodebook export "${box}/IRT_parameters.dta" ///
     using "${git}/raw/irt-parameters.xlsx" ///
-    , replace save sign verify
+    , replace save sign reset
 
   copy "${box}/provider-codebook.xlsx" ///
     "${git}/raw/provider-codebook.xlsx" , replace

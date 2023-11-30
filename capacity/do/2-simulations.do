@@ -208,7 +208,7 @@ use "${git}/data/capacity-optimized.dta" , clear
     egen mean = rowmean(irt_*)
     egen dmean = rowmean(irt_bigg50 irt_bigg40 irt_bigg30 irt_bigg20 irt_biggse irt_biggco)
     egen smean = rowmean(irt_cadres irt_public irt_rururb irt_levels irt_hftype irt_unrest)
-    gen ddif = mean - irt
+    gen ddif = dmean - irt
     gen sdif = smean - irt
 
   sort x country

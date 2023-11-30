@@ -115,7 +115,7 @@ use "${git}/data/optimize-doctors-done.dta" , clear
   , over(f) noout ///
     marker(1, m(p) mc(black) msize(tiny)) medtype(cline) medline(lc(red) lw(medthick)) ///
     inten(0) cwhi lines(lw(thin) lc(black)) box(1 , lc(black) lw(thin)) ///
-  by(cc, c(2) iyaxes yrescale note("") scale(0.7)) ysize(6) ///
+  by(country, c(2) iyaxes yrescale note("") scale(0.7)) ysize(6) ///
     ytit("Average Interaction Competence") note("")
 
     graph export "${git}/appendix/af-docs-upskill.pdf" , replace
