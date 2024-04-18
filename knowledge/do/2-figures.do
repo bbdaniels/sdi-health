@@ -1,4 +1,3 @@
-// Figures for competence paper
 
 // Figure 1. Distribution of competence scores by country
 use "${git}/data/knowledge.dta", clear
@@ -14,7 +13,7 @@ use "${git}/data/knowledge.dta", clear
     line(lw(none)) med(m(|) mc(red) msize(large)) ///
     note("Provider competence score {&rarr}")
 
-  graph export "${git}/outputs/f-quantile.png", replace width(2000)
+  graph export "${git}/outputs/f1-distribution.png", replace width(2000)
 
 // Figure 2. Distribution of competence scores by country and cadre
 use "${git}/data/knowledge.dta", clear
@@ -53,7 +52,7 @@ use "${git}/data/knowledge.dta", clear
     "${git}/temp/Togo.gph" "${git}/temp/Uganda.gph" ///
   , xcom c(2) ysize(5) imargin(zero) colfirst
 
-  graph export "${git}/outputs/f-cadre.png", replace width(2000)
+  graph export "${git}/outputs/f2-cadre.png", replace width(2000)
 
 // Figure 2. Provider competence scores by country and cohort
 use "${git}/data/knowledge.dta", clear
@@ -119,6 +118,6 @@ histogram provider_age1, by(country , ixaxes note(" ") ///
   graph combine "${git}/temp/lpfit.gph" "${git}/temp/regress.gph" ///
     , c(1) imargin(zero) ysize(5)
 
-  graph export "${git}/outputs/f-age-knowledge.png", replace width(2000)
+  graph export "${git}/outputs/f3-cohorts.png", replace width(2000)
 
-*************************** End of do-file *****************************************
+// End
