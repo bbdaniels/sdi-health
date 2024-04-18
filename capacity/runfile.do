@@ -1,9 +1,11 @@
 // Set file paths
 
-global box "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/SDI Reallocation/data"
+global box "/Users/bbdaniels/Documents/Papers/SDI Reallocation/data"
 global git "/Users/bbdaniels/GitHub/sdi-health/capacity"
 
 // Installs for user-written packages
+
+  cap ssc install repkit , replace
 
   * qui do "${git}/do/labelcollapse.ado"
   cap ssc install cdfplot , replace

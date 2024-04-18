@@ -1,7 +1,7 @@
 // Set file paths
 
-global box "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/SDI Competence/"
-global irt "/Users/bbdaniels/Library/CloudStorage/Box-Box/_Papers/_Archive/SDI WBG/SDI/SDI Import/data/analysis/dta/"
+global box "/Users/bbdaniels/Documents/Papers/SDI Competence/"
+global irt "/Users/bbdaniels/Documents/Papers/_Archive/SDI WBG/SDI/SDI Import/data/analysis/dta/"
 global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 
 // Installs for user-written packages
