@@ -104,7 +104,7 @@ use "${git}/data/capacity.dta", clear
     graph save "${git}/temp/pro.gph" , replace
 
   graph combine "${git}/temp/fac.gph" "${git}/temp/pro.gph"  , ysize(6) c(1) imargin(none)
-    graph export "${git}/output/f-descriptives.pdf" , replace
+    graph export "${git}/output/f-descriptives.png" , replace
 
 // Cumulative Capacity
 use "${git}/data/capacity.dta", clear
@@ -135,7 +135,7 @@ use "${git}/data/capacity.dta", clear
       order(1 "Kenya" 2 "Madagascar" 3 "Malawi" 4 "Mozambique" 5 "Niger" ///
             6 "Nigeria" 7 "Sierra Leone" 8 "Tanzania" 9 "Togo" 10 "Uganda"))
 
-      graph export "${git}/output/f-capacity-staff.pdf" , replace
+      graph export "${git}/output/f-capacity-staff.png" , replace
 
 // Setup: Current comparator for optimization
 use "${git}/data/capacity.dta", clear
@@ -176,7 +176,7 @@ use "${git}/data/capacity.dta", clear
     legend(on pos(12) order(3 "Original Assignment" 2 "Reallocated by Country/Sector") size(small) region(lp(blank))) ///
     xlab(-5(1)5) ylab(0 50 100 150 200 250 300) ylab(0(5)25 , axis(2))
 
-    graph export "${git}/output/f-optimize-providers.pdf" , replace
+    graph export "${git}/output/f-optimize-providers.png" , replace
 
 **************************************************
 // Figure: Vizualizations for correctness
@@ -192,24 +192,34 @@ use "${git}/data/capacity-comparison.dta", clear
   egen correct = rowmean(treat?)
 
   tw (fpfitci correct irt_old ///
-      if irt_old > -2 & irt_old < 2 , lc(black) fc(gray) alc(white%0)) ///
+      if irt_old > -1 & irt_old < 3 , lc(black) fc(gray) alc(white%0)) ///
     (pcarrow irtCorrect irtKnowledge dmeanCorrect dmeanKnowledge ///
-      , ml(country) mlabang(30) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
-    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%") ///
+      , ml(country) mlabang(20) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
+    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%") ///
       xtit("Average Interaction Competence Before and After Reallocation") ///
-      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
+      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0)) ///
+      title("Demand-Side Patient Reallocation")
 
-      graph export "${git}/output/f-optimization-demand.pdf" , replace
+      graph save "${git}/temp/f-optimization-demand.gph" , replace
 
   tw (fpfitci correct irt_old ///
-      if irt_old > -2 & irt_old < 3 , lc(black) fc(gray) alc(white%0)) ///
+      if irt_old > -1 & irt_old < 3 , lc(black) fc(gray) alc(white%0)) ///
     (pcarrow irtCorrect irtKnowledge smeanCorrect smeanKnowledge ///
-      ,  ml(country) mlabang(30) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
-    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%") ///
+      ,  ml(country) mlabang(20) lc(red) mc(red) mlabc(black) mlabpos(2)) ///
+    , ytit("Vignettes Correct Before and After Reallocation") ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%") ///
       xtit("Average Interaction Competence Before and After Reallocation") ///
-      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0))
+      legend(on r(1) pos(7) order(2 "Theoretical" 3 "Actual") ring(0)) ///
+      title("Supply-Side Provider Reallocation")
 
-      graph export "${git}/output/f-optimization-supply.pdf" , replace
+      graph save "${git}/temp/f-optimization-supply.gph" , replace
+
+    graph combine ///
+      "${git}/temp/f-optimization-supply.gph" ///
+      "${git}/temp/f-optimization-demand.gph" ///
+    , ysize(6) c(1) scale(0.7) xcom
+
+    graph export "${git}/output/f-optimization-x.png" , replace
+
 
 **************************************************
 // Figure: Vizualizations for sectoral restriction
@@ -241,7 +251,7 @@ use "${git}/data/capacity-optimized.dta", clear
 
     graph draw, ysize(6)
 
-    graph export "${git}/output/f-optimization.pdf" , replace
+    graph export "${git}/output/f-optimization.png" , replace
 
 
 **************************************************
@@ -341,13 +351,13 @@ use "${git}/data/capacity-comparison.dta" , clear
   replace Outcome_definition = "Prescriptions with Injection" if studyid == 298000001
 
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
-    & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "African RCTs with Comparable (%) Outcomes") ///
+    & (region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation") ///
   , subgroup(region) sort(CountryName) ///
     nowmark noghet nogwhomt noohomtest noohetstats nullrefline ///
     bodyopts(size(large)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-   graph export "${git}/output/f-lit-review.pdf" , replace
+   graph export "${git}/output/f-lit-review.png" , replace
 
   meta forest _id Outcome_definition _esci _plot if effect_size < 50 ///
     & !(region == "  Average Across Reallocation Simulations" | region == " 95% Doctoral Training Simulation" | region == "Africa") ///
@@ -356,7 +366,7 @@ use "${git}/data/capacity-comparison.dta" , clear
     bodyopts(size(small)) mark(msize(small) mcolor(black) msymbol(O) ) ///
     ciopts(lc(gs12) mstyle(none)) nooverall
 
-    graph export "${git}/appendix/f-lit-2.pdf" , replace
+    graph export "${git}/appendix/f-lit-2.png" , replace
 
   // Save for comparison
 
