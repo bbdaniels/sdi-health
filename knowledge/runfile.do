@@ -6,9 +6,21 @@ global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 
 // Installs for user-written packages
 
-cap ssc install iefieldkit
-cap ssc install vioplot
-cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/binsreg/master/stata/")
+  cap ssc install repkit
+    repado using "${git}/ado"
+
+  copy "https://github.com/graykimbrough/uncluttered-stata-graphs/raw/master/schemes/scheme-uncluttered.scheme" ///
+    "${git}/ado/scheme-uncluttered.scheme" , replace
+
+    cd "${git}/ado/"
+    set scheme uncluttered , perm
+    graph set eps fontface "Helvetica"
+
+  cap ssc install iefieldkit
+  net install outwrite, from("https://github.com/bbdaniels/stata/raw/main/")
+  net install st0085_2, from("http://www.stata-journal.com/software/sj14-2")
+  cap ssc install vioplot
+  cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/binsreg/master/stata/")
 
 // Copy in raw data -- comment out in final package
 /*
