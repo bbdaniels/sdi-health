@@ -8,10 +8,13 @@ use "${git}/data/knowledge.dta", clear
   vioplot theta_mle [pweight=weight] ///
   , over(country)  xline(-5(1)5,lc(gray) lw(thin))  hor ///
     yscale(reverse) xline(0,lc(black) lw(thick)) ylab(,angle(0)) ysize(5) ///
-    yscale(noline) xscale(noline) xlab(-5(1)5 0 , labsize(small) notick) ///
+    yscale(noline) xscale(noline) ///
+    xlab(-5 `""-5SD" "15%""' -4 `""-4SD" "15%""' -3 `""-3SD" "15%""' -2 `""-2SD" "20%""' -1 `""-1SD" "25%""' ///
+          0 `""Mean" "35%""' 1 `""+1SD" "45%""' 2 `""+2SD" "55%""' 3 `""+3SD" "65%""' 4 `""+4SD" "75%""' 5 `""+5SD" "85%""'  ///
+      , labsize(vsmall) notick) ///
     den(lw() lc(black) fc(black%80)) bar(fc(red) lw(none)) ///
     line(lw(none)) med(m(|) mc(red) msize(large)) ///
-    note("Provider competence score {&rarr}")
+    note("Provider competence score and expected correct vignettes")
 
   graph export "${git}/outputs/f1-distribution.png", replace width(2000)
 
@@ -82,13 +85,20 @@ replace provider_age1 = . if provider_age1>80 | provider_age1<=19
       keep if country != "Uganda" & country != " Full Sample"
       egen c = rank(a1)
 
+      gen k = string(-1/a1)
+
+        replace k = "n/a" if -1/a1 < 0
+        replace k = substr(k,1,strpos(k,".")-1) + " yr." if -1/a1 > 0
+
+        replace country = country + ": " + k
+
       tw ///
         (rcap a5 a6 c , lc(gray)) ///
         (scatter a1 c , mc(black) mlab(country) mlabc(black) mlabpos(3) mlabangle(20) mlabsize(vsmall)) ///
       , xoverhang xscale(reverse) yscale(noline reverse) yline(-0.03(0.01)0.03 , lc(gs14)) ///
         yline(0 , lc(red)) xscale(off) nodraw fysize(20) ///
-        title("Improvement per decade (controlled for covariates)" ///
-          , span pos(11)) saving("${git}/temp/regress.gph" , replace) ///
+        title("Improvement per ten years and time to +10p.p. improvement (adjusted for covariates)" ///
+          , size(small) span pos(11)) saving("${git}/temp/regress.gph" , replace) ///
         ylab(0 "Zero" -0.03 "+0.3 SD" -0.02 "+0.2 SD" -0.01 "+0.1 SD" ///
                        0.03 "-0.3 SD"  0.02 "-0.2 SD"  0.01 "-0.1 SD" , notick)
 
