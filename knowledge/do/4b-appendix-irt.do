@@ -113,7 +113,7 @@ qui foreach var in ///
 
 
 
-// Figure 6,7. ICCs for IRT Items by Condition
+// Figure 5,6. ICCs for IRT Items by Condition
 use "${git}/data/irt-items.dta" , clear
 sort b_pv1
 gen condition = upper(substr(varname,1,strpos(varname,"_")-1))
@@ -146,7 +146,7 @@ foreach co in `conditions' {
       xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${git}/appendix/f6_irt_`co'.png" , replace
+      graph export "${git}/appendix/f5_irt_`co'.png" , replace
 }
 
 foreach co in `conditions' {
@@ -171,7 +171,7 @@ foreach co in `conditions' {
       xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${git}/appendix/f7_irt_`co'.png" , replace
+      graph export "${git}/appendix/f6_irt_`co'.png" , replace
   }
 }
 
