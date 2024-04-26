@@ -2,6 +2,8 @@
 
 // Table 3 AND Figure 1. Performance in sub-groups
 
+global pct 0 "0%" .25 "25%" .5 "50%" .75 "75%" 1 "100%"
+
 use "${git}/data/knowledge.dta", clear
 
   gen urban = 1 - rural

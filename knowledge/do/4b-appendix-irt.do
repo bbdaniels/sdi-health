@@ -54,16 +54,95 @@ use "${git}/data/knowledge.dta", clear
 
     graph export "${git}/appendix/f2-unidimensionality.png", replace
 
+// Figure 3. Demonstrative items
+
+local 3pl "${git}/raw/irt_output_items.dta"
+use "${git}/data/knowledge.dta", clear
+  ren diabetes_history_numblimb diabetes_history_numb_limb
+  egen check = rowmean(*history*)
+  lab var check "Completion %: All History Questions"
+  lab var diarrhea_history_duration "Diarrhoea: Duration"
+  lab var tb_history_sputum "Tuberculosis: Productive Cough"
+  lab var malaria_history_headache "Malaria: Headache"
+  lab var pph_history_pph "PPH: Prior Occurrence"
+  lab var diabetes_history_numb_limb "Diabetes: Limb Numbness"
+
+  local graphs ""
+
+    preserve
+      use "`3pl'" , clear
+      collapse (mean) a_pv1 b_pv1 c_pv1
+      local a = a_pv1[1]
+      local b = b_pv1[1]
+      local c = c_pv1[1]
+    restore
+    preserve
+      xtile c = theta_mle , n(100)
+
+      local title :  var lab check
+      collapse (mean) check theta_mle  , by(c) fast
+
+      local graphs `"`graphs' "\`check'"  "'
+      tempfile check
+
+    tw ///
+      (function `c'+(1-`c')*(exp(`a'*(x-`b')))/(1+exp(`a'*(x-`b'))) ///
+       , range(-5 5) lc(red) lw(thick))         ///
+      (scatter check theta_mle , mc(black)) ///
+    , ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
+      yscale(noline) xscale(noline) ytit(" ") title("{bf:`title'}" , size(small)) ///
+      xlab(0 "" 5 "+5" -5 "-5" -1 " " -2 " " -3 " " -4 " " 1 " " 2 " " 3 " " 4 " ") ///
+        note("Provider competence score {&rarr}") xtit("") ///
+      saving(`check') nodraw
+    restore
+
+   foreach var of varlist ///
+    diarrhea_history_duration tb_history_sputum ///
+    malaria_history_headache pph_history_pph ///
+    diabetes_history_numb_limb  {
+
+      preserve
+        use "`3pl'" , clear
+        keep if varname == "`var'"
+        local a = a_pv1[1]
+        local b = b_pv1[1]
+        local c = c_pv1[1]
+      restore
+      preserve
+        xtile c = theta_mle , n(100)
+
+        local title :  var lab `var'
+        collapse (mean) `var' theta_mle  , by(c) fast
+
+        local graphs `"`graphs' "\``var''"  "'
+        tempfile `var'
+
+      tw ///
+        (function `c'+(1-`c')*(exp(`a'*(x-`b')))/(1+exp(`a'*(x-`b'))) ///
+         , range(-5 5) lc(red) lw(thick)) ///
+        (scatter `var' theta_mle , mc(black)) ///
+      , ylab(0 "0%" .5 "50%" 1 "100%" , notick) yline(0 .5 1 , lc(black)) ///
+        yscale(noline) xscale(noline) ytit(" ") title("{bf:`title'}" , size(small)) ///
+        xlab(0 "" 5 "+5" -5 "-5" -1 " " -2 " " -3 " " -4 " " 1 " " 2 " " 3 " " 4 " ") ///
+          note("Provider competence score {&rarr}") xtit("") ///
+        saving(``var'') nodraw
+      restore
+    }
+
+    graph combine `graphs' , c(2) ysize(5)
+      graph export "${git}/appendix/f3-items.png", replace
+
+
 // Figure 3. Difficulty and Discrimination of IRT Items
 use "${git}/data/irt-items.dta" , clear
 tw ///
   (scatter a_pv1 b_pv1 if strpos(label,"History") , msize(med) mfc(red) mlc(none)) ///
   (scatter a_pv1 b_pv1 if strpos(label,"Physical") , msize(med) mfc(black) mlc(none)) ///
-, xtit("IRT Item Difficulty (Knowledge Score Required for 50% Success)",size(small)) ///
+, xtit("IRT Item Difficulty (Competence Score Required for 50% Success)",size(small)) ///
   ytit("IRT Item Discrimination (Maximum Score Separation Rate)",size(small)) ///
   legend(on ring(0) c(1) pos(11) order(1 "History Questions" 2 "Physical Examinations"))
 
-  graph export "${git}/appendix/f3-irt-difficulty.png" , replace
+  graph export "${git}/appendix/f4-irt-difficulty.png" , replace
 
 // Figure 4. IRT Index Predictive Validity (Internal/Construct)
 
@@ -74,6 +153,7 @@ local tb_title "Tuberculosis"
 local malaria_title "Child Malaria + Anemia"
 local pph_title "PPH"
 local pregnant_title "Neonatal Asphyxia"
+local graphs ""
 
 qui foreach var in ///
   diarrhea pneumonia diabetes tb malaria pph {
@@ -109,11 +189,9 @@ qui foreach var in ///
   }
 
    graph combine `graphs' , c(2) ysize(5)
-     graph export "${git}/appendix/f4-irt-construct.png", replace
+     graph export "${git}/appendix/f5-irt-construct.png", replace
 
-
-
-// Figure 5,6. ICCs for IRT Items by Condition
+// Figure 6,7. ICCs for IRT Items by Condition
 use "${git}/data/irt-items.dta" , clear
 sort b_pv1
 gen condition = upper(substr(varname,1,strpos(varname,"_")-1))
@@ -143,10 +221,10 @@ foreach co in `conditions' {
     restore
 
     tw `graphs' , title("Condition: `co'") ///
-      xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
+      xtit("Provider Competence Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${git}/appendix/f5_irt_`co'.png" , replace
+      graph export "${git}/appendix/f6_irt_`co'.png" , replace
 }
 
 foreach co in `conditions' {
@@ -168,10 +246,10 @@ foreach co in `conditions' {
       restore
 
     tw `graphs' , title("Condition: `co'") ///
-      xtit("Provider Knowledge Score") ytit("Likelihood of Item Complete") ///
+      xtit("Provider Competence Score") ytit("Likelihood of Item Complete") ///
       ylab(0 "0%" .2 "20%" .4 "40%" .6 "60%" .8 "80%" 1 "100%")
 
-      graph export "${git}/appendix/f6_irt_`co'.png" , replace
+      graph export "${git}/appendix/f7_irt_`co'.png" , replace
   }
 }
 
