@@ -112,50 +112,6 @@ qui foreach var in ///
      graph export "${git}/appendix/f4-irt-construct.png", replace
 
 
-// Figure 5. IRT Index Predictive Validity (External/Predictive)
-use "${git}/data/knowledge.dta", clear
-  tempfile 1 2
-
-  tw ///
-   (scatter percent_correctd theta_mle ///
-     , jitter(2) m(.) mc(black%5) msize(tiny) mlc(none))       ///
-   (fpfitci percent_correctd theta_mle ///
-     [aweight = weight] if theta_mle < 4.5 ,                           ///
-     lw(thick) lcolor(red) ciplot(rline)                          ///
-     alcolor(black) alwidth(thin) alpat(dash))                              ///
-  , graphregion(color(white))                                                ///
-   title("A. Diagnostic Accuracy" ///
-     , size(medium) justification(left) color(black) span pos(11))          ///
-   xtitle("Provider competence score {&rarr}" ///
-     , placement(left) justification(left)) xscale(titlegap(2))             ///
-   ylab(0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%" ///
-     , angle(0) nogrid) yscale(noli) bgcolor(white) ///
-   ytitle("Share of vignettes correct")   ///
-   xlabel(-5 (1) 5) xscale(noli) note("") legend(off) nodraw saving("`1'")
-
-  tw ///
-   (scatter percent_correctt theta_mle ///
-     , jitter(2) m(.) mc(black%5) msize(tiny) mlc(none))       ///
-   (fpfitci percent_correctt theta_mle ///
-     [aweight = weight] if theta_mle < 4.5 ,                           ///
-     lw(thick) lcolor(red) ciplot(rline)                          ///
-     alcolor(black) alwidth(thin) alpat(dash))                              ///
-  , graphregion(color(white))                                                ///
-   title("B. Treatment Accuracy" ///
-     , size(medium) justification(left) color(black) span pos(11))          ///
-   xtitle("Provider competence score {&rarr}" ///
-     , placement(left) justification(left)) xscale(titlegap(2))             ///
-   ylab(0 "0%" 20 "20%" 40 "40%" 60 "60%" 80 "80%" 100 "100%"               ///
-     , angle(0) nogrid) yscale(noli) bgcolor(white) ///
-   ytitle("Share of vignettes correct")   ///
-   xlabel(-5 (1) 5) xscale(noli) note("") legend(off) nodraw saving("`2'")
-
-  graph combine ///
-   "`1'" ///
-   "`2'" ///
-  , graphregion(color(white)) c(1) ysize(6)
-
-   graph export "${git}/appendix/f5-irt-predictive.png", replace
 
 // Figure 6,7. ICCs for IRT Items by Condition
 use "${git}/data/irt-items.dta" , clear
