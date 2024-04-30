@@ -48,10 +48,10 @@ use "${git}/data/knowledge.dta", clear
   foreach c in `levels' {
   cap mat drop result
     foreach var in `varlist' {
-      su `var' if country == "`c'"
-        local mean = r(mean)
+      count if country == "`c'"
         local n = r(N)
       cap su c if country == "`c'" & `var' == 1 , d
+        local mean = r(mean)
         local p25 = r(p25)
         local p75 = r(p75)
 
