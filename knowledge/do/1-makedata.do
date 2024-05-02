@@ -21,13 +21,13 @@
   use "${git}/raw/irt_output_items.dta" , clear
 
   iecodebook export using "${git}/data/irt-items.xlsx" ///
-    , replace save sign verify
+    , replace save sign
 
   gen condition = lower(substr(varname,1,strpos(varname,"_")-1))
   collapse (mean) a_pv1 b_pv1 c_pv1 , by(condition)
 
   iecodebook export using "${git}/data/irc.xlsx" ///
-    , replace save sign verify
+    , replace save sign 
 
 /*****************************
       Vignettes
@@ -253,19 +253,19 @@
     local vexam = ""
   }
 
-  egen total_questions  = rowtotal(*_questions_num)
-  egen total_tests     = rowtotal(*_tests_num)
-  egen total_exams     = rowtotal(*_exams_num)
+  // egen total_questions  = rowtotal(*_questions_num)
+  // egen total_tests     = rowtotal(*_tests_num)
+  // egen total_exams     = rowtotal(*_exams_num)
 
-  lab var total_questions "Total number of history questions asked across all vignettes"
-  lab var total_tests    "Total number of tests run all vignettes"
-  lab var total_exams   "Total number of physical exams done across all vignettes"
+  // lab var total_questions "Total number of history questions asked across all vignettes"
+  // lab var total_tests    "Total number of tests run all vignettes"
+  // lab var total_exams   "Total number of physical exams done across all vignettes"
 
-  egen overall_questions_frac = rowmean(*_questions_frac)
-  egen overall_exams_frac   = rowmean(*_exams_frac)
+  // egen overall_questions_frac = rowmean(*_questions_frac)
+  // egen overall_exams_frac   = rowmean(*_exams_frac)
 
-  lab var overall_questions_frac   "Average proportion of possible questions asked per vignette"
-  lab var overall_exams_frac     "Average proportion of possible physical exams done per vignette"
+  // lab var overall_questions_frac   "Average proportion of possible questions asked per vignette"
+  // lab var overall_exams_frac     "Average proportion of possible physical exams done per vignette"
 
   // Recode occupation by education
   replace provider_cadre = 2 if provider_cadre1 == 4 & inlist(provider_mededuc1,3,4)
@@ -312,6 +312,6 @@ iecodebook export using "${git}/data/knowledge.xlsx" ///
   replace treat   = 1 if treat==100
 
   iecodebook export using "${git}/data/knowledge-long.xlsx" ///
-    , replace save sign
+    , replace save sign verify
 
 ************************************* End of do-file ******************************************************

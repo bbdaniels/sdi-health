@@ -1,7 +1,6 @@
 // Set file paths
 
 global box "/Users/bbdaniels/Documents/Papers/SDI Competence/"
-global irt "/Users/bbdaniels/Documents/Papers/_Archive/SDI WBG/SDI/SDI Import/data/analysis/dta/"
 global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
 
 // Installs for user-written packages
@@ -23,22 +22,27 @@ global git "/Users/bbdaniels/GitHub/sdi-health/knowledge"
   cap net install binsreg , from("https://raw.githubusercontent.com/nppackages/binsreg/master/stata/")
 
 // Copy in raw data -- comment out in final package
-/*
-  iecodebook export "${irt}/irt_output_items.dta" ///
+
+  iecodebook export "${box}/data/irt_output_items.dta" ///
     using "${git}/raw/irt_output_items.xlsx" ///
-    , replace save sign verify
+    , replace verify save sign  ///
+      trim("${git}/do/1-makedata.do" "${git}/do/2-figures.do" ///
+        "${git}/do/3-tables.do" "${git}/do/4a-appendix-subsamples.do" ///
+        "${git}/do/4b-appendix-irt.do")
 
   iecodebook export "${box}/data/Vignettes_pl.dta" ///
     using "${git}/raw/vignettes.xlsx" ///
-    , replace save sign verify
-*/
-
+    , replace verify sign reset ///
+      trim("${git}/do/1-makedata.do" "${git}/do/2-figures.do" ///
+        "${git}/do/3-tables.do" "${git}/do/4a-appendix-subsamples.do" ///
+        "${git}/do/4b-appendix-irt.do")
+--
 // Run all code (with flags)
 
   if 1 qui do "${git}/do/1-makedata.do"
   if 1 qui do "${git}/do/2-figures.do"
   if 1 qui do "${git}/do/3-tables.do"
-  if 1 qui do "${git}/do/4-appendix.do"
-  if 1 qui do "${git}/do/5-irc.do"
+  if 1 qui do "${git}/do/4a-appendix-subsamples.do"
+  if 1 qui do "${git}/do/4b-appendix-irt.do"
 
 // End
