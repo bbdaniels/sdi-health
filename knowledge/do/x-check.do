@@ -23,13 +23,13 @@ restore
 }
 
 preserve
-    qui su theta_mle if provider_cadre1 == 1 [pweight = weight] // Doctor
+    qui su theta_mle if provider_cadre1 == 1 [iweight = weight] // Doctor
       local dmean = `r(mean)'
     keep if provider_cadre1 == 3 // Nurse
       local i = 1
       _pctile theta_mle , p(1)
       while (`r(r1)' < `dmean') {
-        _pctile theta_mle , p(`i')
+        _pctile theta_mle [iweight = weight] , p(`i')
         if (`r(r1)' > `dmean') {
           di "`country': `i' -- `dmean'"
         }
