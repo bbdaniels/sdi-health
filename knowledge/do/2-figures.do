@@ -67,7 +67,7 @@ use "${git}/data/knowledge.dta", clear
   }
 
   graph combine ///
-    "${git}/temp/Full Sample.gph" "${git}/temp/Guinea Bissau.gph" ///
+    "${git}/temp/Full Sample.gph" "${git}/temp/Guinea-Bissau.gph" ///
     "${git}/temp/Kenya.gph" "${git}/temp/Madagascar.gph" ///
     "${git}/temp/Malawi.gph" "${git}/temp/Mozambique.gph"  ///
     "${git}/temp/Niger.gph" "${git}/temp/Nigeria.gph" ///

@@ -27,7 +27,7 @@
   collapse (mean) a_pv1 b_pv1 c_pv1 , by(condition)
 
   iecodebook export using "${git}/data/irc.xlsx" ///
-    , replace save sign 
+    , replace save sign
 
 /*****************************
       Vignettes
@@ -284,8 +284,10 @@
  Save constructed dataset
 ******************************/
 
+replace country = "Guinea-Bissau" if strpos(country,"Guinea")
+
 iecodebook export using "${git}/data/knowledge.xlsx" ///
-  , replace save sign verify
+  , replace save sign reset
 
 
 /*****************************
